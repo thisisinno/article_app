@@ -1,0 +1,4 @@
+import type {Metadata,Viewport} from "next";import {Suspense} from "react";import "./globals.css";import {AppShell} from "@/components/AppShell";import {AppProvider} from "@/components/AppProvider";import {PwaManager} from "@/components/PwaManager";
+export const metadata:Metadata={title:{default:"Insight",template:"%s · Insight"},description:"Editorial social publishing",applicationName:"Insight",appleWebApp:{capable:true,statusBarStyle:"default",title:"Insight"},icons:{apple:"/icon-192.png"}};
+export const viewport:Viewport={width:"device-width",initialScale:1,viewportFit:"cover",themeColor:"#191c1d"};
+export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body><Suspense fallback={<div className="skeleton"/>}><AppProvider><AppShell>{children}</AppShell><PwaManager/></AppProvider></Suspense></body></html>}

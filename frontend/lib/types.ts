@@ -1,0 +1,3 @@
+export type User={id:string;username:string;display_name:string;avatar:string|null;verified:boolean};
+export type Post={id:string;type:"short"|"article";title:string;body:string;excerpt:string;author:User;category:{name:string;slug:string}|null;cover_image:string|null;pinned:boolean;featured:boolean;published_at:string;counts:{views:number;likes:number;comments:number;reposts:number;bookmarks:number;shares:number};viewer_state:{liked:boolean;bookmarked:boolean;reposted:boolean;following_author:boolean;can_edit:boolean};thread?:Post[]};
+export type Comment={id:string;body:string;author:User;created_at:string;counts:{likes:number;replies:number};can_delete:boolean;replies:Comment[]};

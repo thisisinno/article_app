@@ -1,0 +1,8 @@
+Django>=5.0,<6
+daphne>=4.1,<5
+channels>=4.1,<5
+channels-redis>=4.2,<5
+psycopg[binary]>=3.1,<4
+Pillow>=10,<12
+markdown>=3.6,<4
+bleach>=6.1,<7
