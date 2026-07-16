@@ -8,5 +8,38 @@ backend/media/
 backend/staticfiles/
 frontend/node_modules/
 frontend/.next/
+frontend/tsconfig.tsbuildinfo
 frontend/playwright-report/
 .DS_Store
+# Add ignore rules
+
+# Environment files
+env
+.env
+.env.*
+!.env.example
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Python virtual environments
+env/
+venv/
+.venv/
+**/env/
+**/venv/
+**/.venv/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment secrets
+.env
+.env.*
+!.env.example
