@@ -30,7 +30,7 @@ class Post(models.Model):
     title = models.CharField(max_length=240, blank=True)
     body = models.TextField(max_length=30000)
     excerpt = models.CharField(max_length=400, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="posts")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="posts",null=True,blank=True)
     tags = models.ManyToManyField(Tag, blank=True)
     cover_image = models.ImageField(upload_to="posts/", blank=True)
     allow_comments = models.BooleanField(default=True)
