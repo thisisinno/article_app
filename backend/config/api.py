@@ -1,6 +1,7 @@
 import json
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from functools import wraps
+from django.core import signing
 from django.db import transaction
 from django.db.models import F, Q
 from django.http import JsonResponse
@@ -17,7 +18,18 @@ from messaging.models import Conversation,Message
 def payload(request):
     try: return json.loads(request.body or "{}")
     except json.JSONDecodeError: return {}
-def error(message,status=400,field=None): return JsonResponse({"error":{"message":message,"field":field}},status=status)
+def error(message,status=400,field=None,code="request_failed",request=None):
+    data={"code":code,"message":message,"field":field}
+    if request is not None:data["request_id"]=getattr(request,"request_id",None)
+    return JsonResponse({"error":data},status=status)
+def api_login_required(view):
+    @wraps(view)
+    def wrapped(request,*args,**kwargs):
+        if not request.user.is_authenticated:return error("Authentication required",401,code="authentication_required",request=request)
+        return view(request,*args,**kwargs)
+    return wrapped
+def csrf_failure(request,reason=""):
+    return error("Security token expired. Please retry.",403,code="csrf_failed",request=request)
 def user_json(u):
     p=Profile.objects.filter(user=u).first()
     return {"id":str(u.public_id),"username":u.username,"display_name":u.display_name or u.username,"avatar":p.avatar.url if p and p.avatar else None,"verified":bool(p and p.verified)}
@@ -153,11 +165,11 @@ def follow(request,username):
     else: Follow.objects.filter(follower=request.user,following=target).delete(); active=False
     return JsonResponse({"active":active,"count":target.follower_links.count()})
 
-@login_required
+@api_login_required
 def conversations(request):
     qs=request.user.conversations.prefetch_related("participants").order_by("-updated_at")
     return JsonResponse({"results":[{"id":str(c.id),"participants":[user_json(u) for u in c.participants.all() if u!=request.user],"last_message":c.messages.last().body if c.messages.exists() else "","updated_at":c.updated_at.isoformat()} for c in qs]})
-@login_required
+@api_login_required
 @require_http_methods(["GET","POST"])
 def messages(request,conversation_id):
     c=get_object_or_404(Conversation,pk=conversation_id,participants=request.user)
@@ -166,5 +178,14 @@ def messages(request,conversation_id):
     try: m,_=Message.objects.get_or_create(sender=request.user,client_id=d["client_id"],defaults={"conversation":c,"body":d.get("body","")[:4000]})
     except Exception:return error("Invalid message")
     return JsonResponse({"id":str(m.id),"client_id":str(m.client_id),"body":m.body,"created_at":m.created_at.isoformat()},status=201)
-@login_required
+@api_login_required
 def notifications(request): return JsonResponse({"results":[{"id":str(n.id),"kind":n.kind,"text":n.text,"read":bool(n.read_at),"created_at":n.created_at.isoformat(),"post_id":str(n.post_id) if n.post_id else None} for n in request.user.notifications.order_by("-created_at")[:30]]})
+
+@api_login_required
+@require_POST
+def websocket_ticket(request):
+    conversation_id=str(payload(request).get("conversation_id", ""))
+    conversation=Conversation.objects.filter(pk=conversation_id,participants=request.user).first()
+    if not conversation:return error("Conversation not found",404,code="not_found",request=request)
+    ticket=signing.dumps({"user_id":request.user.pk,"conversation_id":conversation_id,"nonce":str(__import__("uuid").uuid4()),"issued_at":int(timezone.now().timestamp())},salt="insight.websocket")
+    return JsonResponse({"ticket":ticket,"expires_in":60})
