@@ -27,4 +27,4 @@ class Follow(models.Model):
     following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="follower_links")
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
-        constraints = [models.UniqueConstraint(fields=("follower", "following"), name="unique_follow"), models.CheckConstraint(condition=~Q(follower=F("following")), name="no_self_follow")]
+        constraints = [models.UniqueConstraint(fields=("follower", "following"), name="unique_follow"), models.CheckConstraint(check=~Q(follower=F("following")), name="no_self_follow")]

@@ -24,7 +24,7 @@ self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin || ["/api/", "/admin/", "/ws/", "/media/", "/chat", "/notifications"].some(prefix => url.pathname.startsWith(prefix)) || url.pathname === "/sw.js" || url.pathname === "/manifest.webmanifest") return;
+  if (url.origin !== self.location.origin || ["/api/", "/admin/", "/ws/", "/media/", "/notifications", "/profile/"].some(prefix => url.pathname.startsWith(prefix)) || url.pathname === "/sw.js" || url.pathname === "/manifest.webmanifest") return;
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).catch(() => caches.match("/offline.html").then(response => response || Response.error())));
     return;

@@ -1,0 +1,2 @@
+import type {User} from "@/lib/types";
+export function Avatar({user,size=40,className=""}:{user:Pick<User,"avatar"|"display_name">;size?:number;className?:string}){return user.avatar?<img className={`avatarImage ${className}`} src={user.avatar} width={size} height={size} alt=""/>:<span className={`avatarFallback ${className}`} style={{width:size,height:size}} aria-hidden="true">{user.display_name.trim().charAt(0).toUpperCase()||"?"}</span>}

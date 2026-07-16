@@ -2,6 +2,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils.text import slugify
 
 class Category(models.Model):
     name = models.CharField(max_length=60, unique=True)
@@ -9,6 +10,9 @@ class Category(models.Model):
     description = models.CharField(max_length=240, blank=True)
     is_active = models.BooleanField(default=True)
     sort_order = models.PositiveSmallIntegerField(default=0)
+    def save(self,*args,**kwargs):
+        if not self.slug:self.slug=slugify(self.name)
+        super().save(*args,**kwargs)
     def __str__(self): return self.name
 
 class Tag(models.Model):
@@ -26,7 +30,7 @@ class Post(models.Model):
     title = models.CharField(max_length=240, blank=True)
     body = models.TextField(max_length=30000)
     excerpt = models.CharField(max_length=400, blank=True)
-    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL, related_name="posts")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="posts")
     tags = models.ManyToManyField(Tag, blank=True)
     cover_image = models.ImageField(upload_to="posts/", blank=True)
     allow_comments = models.BooleanField(default=True)
@@ -39,6 +43,7 @@ class Post(models.Model):
     thread_position = models.PositiveSmallIntegerField(null=True, blank=True)
     scheduled_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    published_notification_sent_at = models.DateTimeField(null=True, blank=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     removed_at = models.DateTimeField(null=True, blank=True)
@@ -48,7 +53,7 @@ class Post(models.Model):
     class Meta:
         ordering = ("-pinned", "-published_at", "-created_at")
         indexes = [models.Index(fields=("status", "published_at")), models.Index(fields=("category", "published_at")), models.Index(fields=("author", "published_at")), models.Index(fields=("thread_root", "thread_position"))]
-        constraints = [models.CheckConstraint(condition=Q(post_type="short") | ~Q(title=""), name="article_requires_title")]
+        constraints = [models.CheckConstraint(check=Q(post_type="short") | ~Q(title=""), name="article_requires_title")]
     def __str__(self): return self.title or self.body[:60]
 
 class Media(models.Model):
@@ -75,5 +80,5 @@ class Comment(models.Model):
     like_count = models.PositiveIntegerField(default=0); reply_count = models.PositiveIntegerField(default=0)
     class Meta:
         ordering = ("created_at",)
-        constraints = [models.CheckConstraint(condition=(Q(author__isnull=False, visitor__isnull=True) | Q(author__isnull=True, visitor__isnull=False)), name="comment_exactly_one_actor")]
+        constraints = [models.CheckConstraint(check=(Q(author__isnull=False, visitor__isnull=True) | Q(author__isnull=True, visitor__isnull=False)), name="comment_exactly_one_actor")]
         indexes = [models.Index(fields=("post", "parent", "created_at"))]
