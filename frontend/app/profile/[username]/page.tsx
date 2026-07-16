@@ -1,7 +1,8 @@
 "use client";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
+import { isActiveRequest, isRequestCancellation } from "@/lib/request-state";
 import type { User } from "@/lib/types";
 import { Feed } from "@/components/Feed";
 import { useApp } from "@/components/AppProvider";
@@ -29,22 +30,32 @@ export default function ProfilePage({
     [error, setError] = useState(""),
     [edit, setEdit] = useState(false),
     [version, setVersion] = useState(0),
+    requestSequence = useRef(0),
     sp = useSearchParams(),
     router = useRouter();
-  const load = useCallback(() => {
+  useEffect(() => {
     if (!username) return;
     const c = new AbortController();
+    const requestId = ++requestSequence.current;
+    setProfile(null);
+    setError("");
     api<Profile>(`/profiles/${username}/`, { signal: c.signal })
-      .then(setProfile)
-      .catch((x) =>
-        setError(x instanceof Error ? x.message : "Unable to load profile."),
-      );
-    return c;
-  }, [username]);
-  useEffect(() => {
-    const c = load();
-    return () => c?.abort();
-  }, [load, version]);
+      .then((value) => {
+        if (isActiveRequest(requestId, requestSequence.current, c.signal))
+          setProfile(value);
+      })
+      .catch((x) => {
+        if (
+          !isActiveRequest(requestId, requestSequence.current, c.signal) ||
+          isRequestCancellation(x, c.signal)
+        ) return;
+        setError(x instanceof Error ? x.message : "Unable to load profile.");
+      });
+    return () => {
+      requestSequence.current += 1;
+      c.abort();
+    };
+  }, [username, version]);
   useEffect(() => {
     if (sp.get("edit") === "1" && profile?.is_me) setEdit(true);
   }, [sp, profile]);
@@ -91,8 +102,6 @@ export default function ProfilePage({
   async function saved() {
     setEdit(false);
     await refresh();
-    const c = load();
-    c?.abort();
     setVersion((x) => x + 1);
     toast("Profile updated");
   }

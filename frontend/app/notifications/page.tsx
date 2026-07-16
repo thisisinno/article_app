@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
+import { isActiveRequest, isRequestCancellation } from "@/lib/request-state";
 import type { Notification } from "@/lib/types";
 import { useApp } from "@/components/AppProvider";
 import { BellIcon, MoreIcon, TrashIcon } from "@/components/Icons";
@@ -25,25 +26,32 @@ export default function Notifications() {
     if (!user) return;
     const c = new AbortController(),
       seq = ++sequence.current;
-    setState((s) => ({ ...s, status: "loading" }));
+    setState((s) => ({ ...s, status: "loading", message: undefined }));
     api<{ results: Notification[]; unread_count: number }>("/notifications/", {
       signal: c.signal,
     })
       .then((x) => {
-        if (seq === sequence.current) {
+        if (isActiveRequest(seq, sequence.current, c.signal)) {
           setState({ status: "ready", items: x.results });
           setUnreadCount(x.unread_count);
         }
       })
-      .catch(() => {
-        if (seq === sequence.current)
+      .catch((error) => {
+        if (
+          !isActiveRequest(seq, sequence.current, c.signal) ||
+          isRequestCancellation(error, c.signal) ||
+          (error instanceof ApiError && error.code === "request_aborted")
+        ) return;
           setState((s) => ({
             ...s,
             status: "error",
             message: "Unable to load notifications.",
           }));
       });
-    return () => c.abort();
+    return () => {
+      sequence.current += 1;
+      c.abort();
+    };
   }, [user, retry, setUnreadCount]);
   async function read(item: Notification) {
     const wasUnread = !item.read;

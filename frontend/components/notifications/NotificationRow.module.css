@@ -1,1 +1,228 @@
-.shell{position:relative;overflow:hidden;background:var(--danger);color:#fff}.delete{position:absolute;inset-block:0;width:96px;border:0;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px}.left{left:0}.right{right:0}.row{position:relative;display:grid;grid-template-columns:26px 40px minmax(0,1fr) auto;gap:10px;align-items:start;padding:15px 14px;background:#fff;border-bottom:1px solid var(--border);touch-action:pan-y;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .2s}.unread{background:#f4f3ff}.event svg{width:19px;color:var(--accent)}.body{min-width:0}.body p{margin:0;line-height:1.35}.body>span{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}.body small{display:block;color:var(--muted);margin-top:5px}.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:8px}.more{opacity:.3}.row:hover .more,.more:focus-visible{opacity:1}@media(max-width:600px){.more{opacity:.7}}
+.shell {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: var(--danger, #dc2626);
+}
+
+.row {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 76px;
+  padding: 14px 16px;
+
+  background: #ffffff;
+  color: #111827;
+  -webkit-text-fill-color: #111827;
+
+  cursor: pointer;
+  user-select: none;
+  touch-action: pan-y;
+
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease;
+}
+
+.row:hover {
+  background: #f9fafb;
+}
+
+.unread {
+  background: #f3f7ff;
+}
+
+.unread:hover {
+  background: #edf4ff;
+}
+
+.event {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  color: #2563eb;
+  -webkit-text-fill-color: #2563eb;
+
+  background: #eff6ff;
+  border-radius: 50%;
+}
+
+.event svg {
+  width: 17px;
+  height: 17px;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+
+  color: #111827;
+  -webkit-text-fill-color: #111827;
+}
+
+.message {
+  margin: 0;
+
+  color: #374151 !important;
+  -webkit-text-fill-color: #374151 !important;
+
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.actorName {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+
+  font-weight: 700;
+
+  background: none !important;
+  background-image: none !important;
+  background-clip: border-box !important;
+  -webkit-background-clip: border-box !important;
+
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.notificationText {
+  color: #374151 !important;
+  -webkit-text-fill-color: #374151 !important;
+
+  font-weight: 400;
+
+  background: none !important;
+  background-image: none !important;
+  background-clip: border-box !important;
+  -webkit-background-clip: border-box !important;
+}
+
+.preview {
+  display: block;
+  overflow: hidden;
+
+  margin-top: 4px;
+
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+
+  font-size: 13px;
+  line-height: 1.4;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  display: block;
+  margin-top: 5px;
+
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.dot {
+  flex: 0 0 auto;
+
+  width: 9px;
+  height: 9px;
+
+  background: #2563eb;
+  border-radius: 50%;
+}
+
+.more {
+  flex: 0 0 auto;
+
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+
+  opacity: 0;
+  transition:
+    opacity 150ms ease,
+    color 150ms ease;
+}
+
+.row:hover .more,
+.more:focus-visible {
+  opacity: 1;
+}
+
+.more:hover {
+  color: #dc2626 !important;
+  -webkit-text-fill-color: #dc2626 !important;
+}
+
+.delete {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  width: 110px;
+  padding: 0;
+
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  background: #dc2626;
+  border: 0;
+  cursor: pointer;
+}
+
+.delete svg {
+  width: 18px;
+  height: 18px;
+}
+
+.left {
+  left: 0;
+}
+
+.right {
+  right: 0;
+}
+
+@media (max-width: 640px) {
+  .row {
+    gap: 10px;
+    min-height: 72px;
+    padding: 12px;
+  }
+
+  .event {
+    width: 30px;
+    height: 30px;
+  }
+
+  .message {
+    font-size: 13.5px;
+  }
+
+  .more {
+    opacity: 1;
+  }
+}
