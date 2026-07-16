@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "insight";
-const STATIC_CACHE = `${CACHE_PREFIX}-static-v2`;
-const OFFLINE_CACHE = `${CACHE_PREFIX}-offline-v2`;
+const STATIC_CACHE = `${CACHE_PREFIX}-static-v3`;
+const OFFLINE_CACHE = `${CACHE_PREFIX}-offline-v3`;
 const PRECACHE = ["/offline.html", "/icon-192.png", "/icon-512.png"];
 const CURRENT_CACHES = new Set([STATIC_CACHE, OFFLINE_CACHE]);
 
@@ -24,7 +24,7 @@ self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin || ["/api/", "/admin/", "/ws/", "/media/"].some(prefix => url.pathname.startsWith(prefix)) || url.pathname === "/sw.js" || url.pathname === "/manifest.webmanifest") return;
+  if (url.origin !== self.location.origin || ["/api/", "/admin/", "/ws/", "/media/", "/chat", "/notifications"].some(prefix => url.pathname.startsWith(prefix)) || url.pathname === "/sw.js" || url.pathname === "/manifest.webmanifest") return;
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).catch(() => caches.match("/offline.html").then(response => response || Response.error())));
     return;
