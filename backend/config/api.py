@@ -57,11 +57,15 @@ def user_json(u):
     can_publish=bool(u.is_staff or u.is_superuser)
     return {"id":str(u.public_id),"username":u.username,"display_name":u.display_name or u.username,"avatar":media_url(p.avatar) if p else None,"verified":bool(p and p.verified),"is_staff":bool(u.is_staff),"is_superuser":bool(u.is_superuser),"can_publish":can_publish}
 
+def can_manage_post(user, post):
+    return bool(user.is_authenticated and (user.is_superuser or post.author_id == user.id))
+
 def post_json(p,request,full=False,viewer=None):
     actor=actor_kwargs(request)
     liked = p.pk in viewer[0] if viewer else PostLike.objects.filter(post=p,**actor).exists()
     bookmarked = p.pk in viewer[1] if viewer else PostBookmark.objects.filter(post=p,**actor).exists()
-    return {"id":str(p.pk),"type":p.post_type,"title":p.title,"body":p.body if full else p.body[:640],"excerpt":p.excerpt,"status":p.status,"author":user_json(p.author),"category":{"id":p.category_id,"name":p.category.name,"slug":p.category.slug} if p.category else None,"cover_image":media_url(p.cover_image),"pinned":p.pinned,"featured":p.featured,"published_at":(p.published_at or p.created_at).isoformat(),"counts":{"views":p.view_count,"likes":p.like_count,"comments":p.comment_count,"bookmarks":p.bookmark_count,"shares":p.share_count},"viewer_state":{"liked":liked,"bookmarked":bookmarked,"can_edit":bool(request.user.is_authenticated and request.user.is_staff)},"thread_root":str(p.thread_root_id) if p.thread_root_id else None,"thread_position":p.thread_position}
+    manageable=can_manage_post(request.user,p)
+    return {"id":str(p.pk),"type":p.post_type,"title":p.title,"body":p.body if full else p.body[:640],"excerpt":p.excerpt,"status":p.status,"author":user_json(p.author),"category":{"id":p.category_id,"name":p.category.name,"slug":p.category.slug} if p.category else None,"cover_image":media_url(p.cover_image),"pinned":p.pinned,"featured":p.featured,"published_at":(p.published_at or p.created_at).isoformat(),"counts":{"views":p.view_count,"likes":p.like_count,"comments":p.comment_count,"bookmarks":p.bookmark_count,"shares":p.share_count},"viewer_state":{"liked":liked,"bookmarked":bookmarked,"can_edit":manageable,"can_delete":manageable},"thread_root":str(p.thread_root_id) if p.thread_root_id else None,"thread_position":p.thread_position}
 
 def serialize_posts(rows,request,full=False):
     ids=[x.pk for x in rows]; actor=actor_kwargs(request)
@@ -147,11 +151,11 @@ def create_post(request):
 def post_detail(request,post_id):
     p=get_object_or_404(Post.objects.select_related("author","author__profile","category"),pk=post_id)
     if request.method=="GET":
-        if p.status!="published" and not (request.user.is_authenticated and request.user.is_staff):return error("Not found",404,code="not_found")
+        if p.status!="published":return error("Post unavailable.",404,code="not_found")
         data=post_json(p,request,True);thread_rows=list(p.thread_entries.filter(status="published").select_related("author","author__profile","category"));data["thread"]=serialize_posts(thread_rows,request,True);return JsonResponse(data)
     if not request.user.is_authenticated:return error("Authentication required",401,code="authentication_required")
-    if not request.user.is_staff:return error("Only staff members can publish posts.",403,code="staff_only")
-    if request.method=="DELETE":p.status="removed";p.removed_at=timezone.now();p.save(update_fields=("status","removed_at"));return JsonResponse({},status=204)
+    if not can_manage_post(request.user,p):return error("You cannot manage this post.",403,code="forbidden")
+    if request.method=="DELETE":p.status="removed";p.removed_at=timezone.now();p.save(update_fields=("status","removed_at"));return JsonResponse({"deleted":True,"post_id":str(p.pk),"redirect":"/"})
     d=payload(request)
     for key in ("title","body","excerpt"):
         if key in d:setattr(p,key,d[key])
@@ -180,13 +184,22 @@ def reaction(request,post_id,kind):
 def view(request,post_id):return JsonResponse({"count":record_view(request,get_object_or_404(Post,pk=post_id,status="published"))})
 @require_POST
 def share(request,post_id):
-    post=get_object_or_404(Post,pk=post_id,status="published");count=record_share(request,post,payload(request).get("channel","copy"));transaction.on_commit(lambda:notify_post_share(post,request.user if request.user.is_authenticated else None,getattr(request,"visitor",None)));return JsonResponse({"count":count})
+    channel=payload(request).get("channel","copy")
+    if channel not in {"whatsapp","facebook","x","instagram_native","copy","native"}:return error("Unsupported share channel.",field="channel",code="validation_error")
+    post=get_object_or_404(Post,pk=post_id,status="published");count=record_share(request,post,channel);transaction.on_commit(lambda:notify_post_share(post,request.user if request.user.is_authenticated else None,getattr(request,"visitor",None)));return JsonResponse({"count":count})
 
 def comment_json(c,request,liked_ids=None,reply_previews=None):
     liked=(c.pk in liked_ids) if liked_ids is not None else CommentLike.objects.filter(comment=c,**actor_kwargs(request)).exists()
     previews=(reply_previews or {}).get(c.pk,[])
     visitor_id=getattr(getattr(request,"visitor",None),"id",None)
     return {"id":str(c.pk),"body":c.body,"author":user_json(c.author) if c.author else {"id":"guest","username":None,"display_name":c.guest_name,"avatar":None,"verified":False,"is_staff":False,"is_superuser":False,"can_publish":False},"created_at":c.created_at.isoformat(),"counts":{"likes":c.like_count,"replies":c.reply_count},"reply_count":c.reply_count,"has_more_replies":c.reply_count>len(previews),"viewer_state":{"liked":liked},"can_delete":bool(request.user.is_staff or (request.user.is_authenticated and c.author==request.user) or (not request.user.is_authenticated and c.visitor_id==visitor_id)),"replies":[comment_json(x,request,liked_ids,{}) for x in previews]}
+
+@require_http_methods(["GET"])
+def comment_context(request,comment_id):
+    comment=get_object_or_404(Comment.objects.select_related("post","author","author__profile","parent","parent__author","parent__author__profile"),pk=comment_id,status="published",post__status="published")
+    root=comment.parent or comment
+    replies=list(root.replies.filter(status="published").select_related("author","author__profile"))
+    return JsonResponse({"comment":comment_json(comment,request),"root_comment_id":str(root.pk),"post_id":str(comment.post_id),"parent_id":str(comment.parent_id) if comment.parent_id else None,"reply":bool(comment.parent_id),"context":{"root":comment_json(root,request),"replies":serialized_comments(replies,request)}})
 
 def serialized_comments(rows,request,include_previews=False):
     ids=[c.pk for c in rows];liked=set(CommentLike.objects.filter(comment_id__in=ids,**actor_kwargs(request)).values_list("comment_id",flat=True))
@@ -297,7 +310,9 @@ def profile_me(request):
 
 def notification_json(n):
     preview=(n.post.title or n.post.body[:120]) if n.post else ""
-    return {"id":str(n.pk),"kind":n.kind,"actor":user_json(n.actor) if n.actor else None,"text":n.text,"post":{"id":str(n.post_id),"title":n.post.title,"preview":preview} if n.post else None,"comment_id":str(n.comment_id) if n.comment_id else None,"read":bool(n.read_at),"created_at":n.created_at.isoformat()}
+    parent_id=n.comment.parent_id if n.comment else None
+    open_comments=n.kind in (Notification.Kind.POST_COMMENT,Notification.Kind.COMMENT_REPLY,Notification.Kind.COMMENT_LIKE)
+    return {"id":str(n.pk),"kind":n.kind,"actor":user_json(n.actor) if n.actor else None,"text":n.text,"post":{"id":str(n.post_id),"title":n.post.title,"preview":preview} if n.post else None,"comment_id":str(n.comment_id) if n.comment_id else None,"comment_parent_id":str(parent_id) if parent_id else None,"root_comment_id":str(parent_id or n.comment_id) if n.comment_id else None,"open_comments":open_comments,"read":bool(n.read_at),"created_at":n.created_at.isoformat()}
 
 @api_login_required
 def notifications(request):
@@ -307,13 +322,20 @@ def notification_unread_count(request):return JsonResponse({"count":request.user
 @api_login_required
 @require_POST
 def notification_read(request,notification_id):
-    n=get_object_or_404(request.user.notifications,pk=notification_id);n.read_at=n.read_at or timezone.now();n.save(update_fields=("read_at",));return JsonResponse(notification_json(n))
+    with transaction.atomic():
+        n=get_object_or_404(request.user.notifications.select_for_update().select_related("actor","actor__profile","post","comment"),pk=notification_id)
+        if n.read_at is None:n.read_at=timezone.now();n.save(update_fields=("read_at",))
+        unread=request.user.notifications.filter(read_at__isnull=True).count()
+    return JsonResponse({"notification":notification_json(n),"unread_count":unread})
 @api_login_required
 @require_POST
-def notifications_read_all(request):request.user.notifications.filter(read_at__isnull=True).update(read_at=timezone.now());return JsonResponse({"ok":True,"unread_count":0})
+def notifications_read_all(request):updated=request.user.notifications.filter(read_at__isnull=True).update(read_at=timezone.now());return JsonResponse({"updated":updated,"unread_count":0})
 @api_login_required
 @require_http_methods(["DELETE"])
-def notification_delete(request,notification_id):get_object_or_404(request.user.notifications,pk=notification_id).delete();return JsonResponse({},status=204)
+def notification_delete(request,notification_id):
+    with transaction.atomic():
+        get_object_or_404(request.user.notifications.select_for_update(),pk=notification_id).delete();unread=request.user.notifications.filter(read_at__isnull=True).count()
+    return JsonResponse({"deleted":True,"unread_count":unread})
 @api_login_required
 @require_http_methods(["DELETE"])
-def notifications_clear(request):request.user.notifications.all().delete();return JsonResponse({},status=204)
+def notifications_clear(request):deleted,_=request.user.notifications.all().delete();return JsonResponse({"deleted":deleted,"unread_count":0})
