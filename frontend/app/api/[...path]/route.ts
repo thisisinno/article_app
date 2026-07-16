@@ -2,6 +2,7 @@ import {NextRequest} from "next/server";
 import {DJANGO_ORIGIN} from "@/lib/server/backend";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 const HOP_BY_HOP = ["host", "connection", "content-length", "transfer-encoding", "content-encoding", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "upgrade"];
 
 function jsonError(status: number, code: string, message: string, requestId?: string | null) {
@@ -31,14 +32,16 @@ async function proxy(request: NextRequest) {
   const timeout = setTimeout(() => controller.abort(), 15_000);
   try {
     const hasBody = !["GET", "HEAD"].includes(request.method);
-    const upstream = await fetch(target, {
+    const init: RequestInit & {duplex?: "half"} = {
       method: request.method,
       headers,
-      body: hasBody ? await request.arrayBuffer() : undefined,
+      body: hasBody ? request.body : undefined,
       cache: "no-store",
       redirect: "manual",
       signal: controller.signal,
-    });
+    };
+    if (hasBody) init.duplex = "half";
+    const upstream = await fetch(target, init);
     const requestId = upstream.headers.get("X-Request-ID") || request.headers.get("X-Request-ID");
     if ([301, 302, 303, 307, 308].includes(upstream.status)) {
       console.error("Unexpected API redirect", {path: target.pathname, status: upstream.status, requestId, location: upstream.headers.get("Location")?.slice(0, 200)});

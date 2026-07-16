@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "insight";
-const STATIC_CACHE = `${CACHE_PREFIX}-static-v3`;
-const OFFLINE_CACHE = `${CACHE_PREFIX}-offline-v3`;
+const STATIC_CACHE = `${CACHE_PREFIX}-static-v4`;
+const OFFLINE_CACHE = `${CACHE_PREFIX}-offline-v4`;
 const PRECACHE = ["/offline.html", "/icon-192.png", "/icon-512.png"];
 const CURRENT_CACHES = new Set([STATIC_CACHE, OFFLINE_CACHE]);
 
@@ -39,3 +39,33 @@ self.addEventListener("fetch", event => {
     })());
   }
 });
+
+const safeInternalUrl = value => {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return "/notifications";
+  return value === "/" || value.startsWith("/post/") || value.startsWith("/notifications") || value.startsWith("/profile/") ? value : "/notifications";
+};
+
+self.addEventListener("push", event => {
+  let data = {};
+  try { data = event.data?.json() || {}; } catch { data = {}; }
+  const title = typeof data.title === "string" ? data.title : "Jesca Social Work";
+  event.waitUntil(self.registration.showNotification(title, {
+    body: typeof data.body === "string" ? data.body : "You have a new notification.",
+    icon: "/icon-192.png", badge: "/icon-192.png",
+    tag: typeof data.tag === "string" ? data.tag : "jesca:notification",
+    data: {url: safeInternalUrl(data.url)}, renotify: Boolean(data.renotify),
+  }));
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const destination = new URL(safeInternalUrl(event.notification.data?.url), self.location.origin).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({type:"window", includeUncontrolled:true});
+    const client = windows.find(item => new URL(item.url).origin === self.location.origin);
+    if (client) { await client.focus(); if ("navigate" in client) await client.navigate(destination); return; }
+    await self.clients.openWindow(destination);
+  })());
+});
+self.addEventListener("notificationclose", () => undefined);
+self.addEventListener("pushsubscriptionchange", event => event.waitUntil(self.clients.matchAll({type:"window",includeUncontrolled:true}).then(items => Promise.all(items.map(item => item.postMessage({type:"PUSH_SUBSCRIPTION_CHANGE"}))))));

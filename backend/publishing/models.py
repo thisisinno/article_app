@@ -63,6 +63,7 @@ class Media(models.Model):
     alt_text = models.CharField(max_length=300, blank=True)
     width = models.PositiveIntegerField(null=True, blank=True); height = models.PositiveIntegerField(null=True, blank=True)
     sort_order = models.PositiveSmallIntegerField(default=0)
+    class Meta: ordering=("sort_order","id")
 
 class Comment(models.Model):
     class Status(models.TextChoices): PUBLISHED="published", "Published"; PENDING="pending", "Pending"; HIDDEN="hidden", "Hidden"; REMOVED="removed", "Removed"

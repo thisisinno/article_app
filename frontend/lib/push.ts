@@ -1,0 +1,8 @@
+import {api} from "./api";
+export const urlBase64ToUint8Array=(value:string)=>{const padded=value+"=".repeat((4-value.length%4)%4),raw=atob(padded.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...raw].map(x=>x.charCodeAt(0)))};
+export const getPushSupport=()=>typeof window!=="undefined"&&"serviceWorker"in navigator&&"PushManager"in window&&"Notification"in window;
+export const getExistingSubscription=async()=>getPushSupport()?(await navigator.serviceWorker.ready).pushManager.getSubscription():null;
+const subscriptionBody=(item:PushSubscription)=>item.toJSON();
+export async function syncPushSubscription(){const item=await getExistingSubscription();if(item)await api("/push/subscribe/",{method:"POST",body:JSON.stringify(subscriptionBody(item))});return item}
+export async function subscribeToPush(){if(!getPushSupport())throw Error("Push notifications are not supported in this browser.");const permission=await Notification.requestPermission();if(permission!=="granted")return null;const registration=await navigator.serviceWorker.ready,existing=await registration.pushManager.getSubscription();if(existing){await syncPushSubscription();return existing}const {public_key}=await api<{public_key:string}>("/push/public-key/");const item=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(public_key)});await api("/push/subscribe/",{method:"POST",body:JSON.stringify(subscriptionBody(item))});return item}
+export async function unsubscribeFromPush(){const item=await getExistingSubscription();if(!item)return;await api("/push/subscribe/",{method:"DELETE",body:JSON.stringify({endpoint:item.endpoint})});await item.unsubscribe()}

@@ -2,6 +2,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 class ActorModel(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
@@ -38,3 +39,20 @@ class Notification(models.Model):
         indexes=[models.Index(fields=("recipient","read_at","created_at")),models.Index(fields=("recipient","created_at"))]
 class ContentReport(ActorModel):
     post=models.ForeignKey("publishing.Post",null=True,blank=True,on_delete=models.CASCADE); comment=models.ForeignKey("publishing.Comment",null=True,blank=True,on_delete=models.CASCADE); reason=models.CharField(max_length=100); notes=models.TextField(blank=True); status=models.CharField(max_length=12,default="open")
+
+class WebPushSubscription(models.Model):
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name="push_subscriptions")
+    endpoint=models.URLField(unique=True,max_length=1000);p256dh=models.TextField();auth=models.TextField()
+    expiration_time=models.BigIntegerField(null=True,blank=True);user_agent=models.CharField(max_length=300,blank=True)
+    active=models.BooleanField(default=True);failure_count=models.PositiveSmallIntegerField(default=0)
+    last_success_at=models.DateTimeField(null=True,blank=True);last_failure_at=models.DateTimeField(null=True,blank=True)
+    created_at=models.DateTimeField(auto_now_add=True);updated_at=models.DateTimeField(auto_now=True)
+    class Meta:indexes=[models.Index(fields=("user","active")),models.Index(fields=("updated_at",))]
+
+class PushDelivery(models.Model):
+    class Status(models.TextChoices):PENDING="pending","Pending";PROCESSING="processing","Processing";SENT="sent","Sent";FAILED="failed","Failed";DISCARDED="discarded","Discarded"
+    notification=models.OneToOneField(Notification,on_delete=models.CASCADE,related_name="push_delivery")
+    status=models.CharField(max_length=12,choices=Status.choices,default=Status.PENDING,db_index=True)
+    attempts=models.PositiveSmallIntegerField(default=0);next_attempt_at=models.DateTimeField(default=timezone.now,db_index=True)
+    sent_at=models.DateTimeField(null=True,blank=True);last_error_code=models.CharField(max_length=80,blank=True);created_at=models.DateTimeField(auto_now_add=True)

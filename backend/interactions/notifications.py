@@ -2,7 +2,7 @@ from django.db import transaction
 from django.utils import timezone
 from accounts.models import User
 from publishing.models import Post
-from .models import Notification
+from .models import Notification,PushDelivery
 
 TEXT = {
     "new_post": "published a new post",
@@ -16,10 +16,11 @@ TEXT = {
 def _create(recipient, kind, post, *, actor=None, comment=None, key):
     if actor and recipient.pk == actor.pk:
         return None
-    item, _ = Notification.objects.get_or_create(
+    item, created = Notification.objects.get_or_create(
         dedupe_key=key,
         defaults={"recipient": recipient, "actor": actor, "kind": kind, "post": post, "comment": comment, "text": TEXT[kind]},
     )
+    if created:transaction.on_commit(lambda:PushDelivery.objects.get_or_create(notification=item))
     return item
 
 @transaction.atomic
@@ -30,6 +31,8 @@ def notify_new_post(post):
     recipients = User.objects.filter(is_active=True).exclude(pk=locked.author_id).values_list("pk", flat=True)
     rows = [Notification(recipient_id=pk, actor=locked.author, kind="new_post", post=locked, text=TEXT["new_post"], dedupe_key=f"new_post:{locked.pk}:{pk}") for pk in recipients]
     Notification.objects.bulk_create(rows, ignore_conflicts=True)
+    ids=Notification.objects.filter(dedupe_key__in=[x.dedupe_key for x in rows]).values_list("id",flat=True)
+    PushDelivery.objects.bulk_create([PushDelivery(notification_id=pk) for pk in ids],ignore_conflicts=True)
     locked.published_notification_sent_at = timezone.now()
     locked.save(update_fields=("published_notification_sent_at",))
     return len(rows)

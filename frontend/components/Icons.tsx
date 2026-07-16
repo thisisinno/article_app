@@ -21,6 +21,8 @@ export const LocationIcon=(p:Props)=><Icon {...p}><path d="M20 10c0 5-8 12-8 12S
 export const CalendarIcon=(p:Props)=><Icon {...p}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></Icon>;
 export const CameraIcon=(p:Props)=><Icon {...p}><path d="M14.5 5 13 3h-2L9.5 5H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="4"/></Icon>;
 export const ChevronRightIcon=(p:Props)=><Icon {...p}><path d="m9 18 6-6-6-6"/></Icon>;
+export const ChevronLeftIcon=(p:Props)=><Icon {...p}><path d="m15 18-6-6 6-6"/></Icon>;
+export const ImageIcon=(p:Props)=><Icon {...p}><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 4 4 2-2 5 4"/></Icon>;
 export const MoreShareIcon=(p:Props)=><Icon {...p}><path d="M12 16V3m0 0L7 8m5-5 5 5M5 13v7h14v-7"/></Icon>;
 export const WhatsAppIcon=(p:Props)=><Icon {...p}><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.6Z"/><path d="M8.2 7.8c.5 3.8 3 6.2 6.8 6.8l1.2-1.6-2.5-1.2-.8 1c-1.6-.7-2.8-1.9-3.5-3.5l1-.8-1.2-2.4Z"/></Icon>;
 export const FacebookIcon=(p:Props)=><Icon {...p}><path d="M14 8h4V3h-4a5 5 0 0 0-5 5v3H6v5h3v6h5v-6h4l1-5h-5Z"/></Icon>;

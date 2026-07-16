@@ -1,48 +1,7 @@
 "use client";
-import {useEffect, useRef, useState} from "react";
-
-async function removeInsightCaches() {
-  if (!("caches" in window)) return;
-  const names = await caches.keys();
-  await Promise.all(names.filter(name => name.startsWith("insight-")).map(name => caches.delete(name)));
-}
-
-async function unregisterInsightWorkers() {
-  if (!("serviceWorker" in navigator)) return;
-  const registrations = await navigator.serviceWorker.getRegistrations();
-  await Promise.all(registrations.filter(item => {
-    const script = item.active?.scriptURL || item.waiting?.scriptURL || item.installing?.scriptURL || "";
-    return new URL(item.scope).origin === location.origin && (!script || script.endsWith("/sw.js"));
-  }).map(item => item.unregister()));
-}
-
-export function PwaManager() {
-  const [offline, setOffline] = useState(false);
-  const [update, setUpdate] = useState(false);
-  const [error, setError] = useState("");
-  const registration = useRef<ServiceWorkerRegistration | null>(null);
-  const reloading = useRef(false);
-  useEffect(() => {
-    setOffline(!navigator.onLine);
-    const online = () => setOffline(false), offlineEvent = () => setOffline(true);
-    addEventListener("online", online); addEventListener("offline", offlineEvent);
-    if (process.env.NODE_ENV !== "production") {
-      void Promise.all([unregisterInsightWorkers(), removeInsightCaches()]).catch(() => setError("Cached development data could not be cleared."));
-      return () => { removeEventListener("online", online); removeEventListener("offline", offlineEvent); };
-    }
-    const changed = () => { if (!reloading.current) { reloading.current = true; location.reload(); } };
-    navigator.serviceWorker?.addEventListener("controllerchange", changed);
-    void navigator.serviceWorker?.register("/sw.js", {updateViaCache: "none"}).then(value => {
-      registration.current = value;
-      setUpdate(Boolean(value.waiting));
-      value.addEventListener("updatefound", () => value.installing?.addEventListener("statechange", () => setUpdate(Boolean(value.waiting))));
-    }).catch(() => setError("App update check failed."));
-    return () => { removeEventListener("online", online); removeEventListener("offline", offlineEvent); navigator.serviceWorker?.removeEventListener("controllerchange", changed); };
-  }, []);
-  return <>{offline && <div className="offline">Offline · reconnect to refresh content</div>}{update && <button className="update" onClick={() => registration.current?.waiting?.postMessage("SKIP_WAITING")}>Update available · Reload</button>}{error && <div className="offline">{error}</div>}</>;
-}
-
-export async function resetCachedAppData() {
-  await Promise.all([unregisterInsightWorkers(), removeInsightCaches()]);
-  location.reload();
-}
+import {useEffect,useRef,useState} from "react";import {useApp} from "./AppProvider";import {InstallPromotion,type InstallPromptEvent} from "./pwa/InstallPromotion";import {PushNotificationManager} from "./pwa/PushNotificationManager";
+const DEVELOPMENT = process.env.NODE_ENV !== "production";
+async function removeInsightCaches(){if(!("caches"in window))return;const names=await caches.keys();await Promise.all(names.filter(name=>name.startsWith("insight-")).map(name=>caches.delete(name)))}
+async function unregisterInsightWorkers(){if(!("serviceWorker"in navigator))return;const registrations=await navigator.serviceWorker.getRegistrations();await Promise.all(registrations.filter(item=>{const script=item.active?.scriptURL||item.waiting?.scriptURL||item.installing?.scriptURL||"";return new URL(item.scope).origin===location.origin&&(!script||script.endsWith("/sw.js"))}).map(item=>item.unregister()))}
+export function PwaManager(){const{user,toast}=useApp(),[offline,setOffline]=useState(false),[update,setUpdate]=useState(false),[error,setError]=useState(""),[prompt,setPrompt]=useState<InstallPromptEvent|null>(null),[visible,setVisible]=useState(false),[ios,setIos]=useState(false),registration=useRef<ServiceWorkerRegistration|null>(null),reloading=useRef(false);const close=()=>{setVisible(false);sessionStorage.setItem("jesca-install-dismissed","1")};useEffect(()=>{setOffline(!navigator.onLine);const online=()=>setOffline(false),offlineEvent=()=>setOffline(true);addEventListener("online",online);addEventListener("offline",offlineEvent);if(process.env.NODE_ENV!=="production"){void Promise.all([unregisterInsightWorkers(),removeInsightCaches()]).catch(()=>setError("Cached development data could not be cleared."));return()=>{removeEventListener("online",online);removeEventListener("offline",offlineEvent)}}const installed=matchMedia("(display-mode: standalone)").matches||(navigator as Navigator&{standalone?:boolean}).standalone===true;const isIos=/iphone|ipad|ipod/i.test(navigator.userAgent)&&/safari/i.test(navigator.userAgent)&&!/crios|fxios/i.test(navigator.userAgent);setIos(isIos);const eligible=(event:Event)=>{event.preventDefault();setPrompt(event as InstallPromptEvent);if(!installed&&!sessionStorage.getItem("jesca-install-dismissed"))setTimeout(()=>setVisible(true),650)},appInstalled=()=>{setVisible(false);localStorage.setItem("jesca-installed","1");toast("Jesca Social Work installed")};addEventListener("beforeinstallprompt",eligible);addEventListener("appinstalled",appInstalled);if(isIos&&!installed&&!sessionStorage.getItem("jesca-install-dismissed"))setTimeout(()=>setVisible(true),650);const changed=()=>{if(!reloading.current){reloading.current=true;location.reload()}};navigator.serviceWorker?.addEventListener("controllerchange",changed);void navigator.serviceWorker?.register("/sw.js",{updateViaCache:"none"}).then(value=>{registration.current=value;setUpdate(Boolean(value.waiting));value.addEventListener("updatefound",()=>value.installing?.addEventListener("statechange",()=>setUpdate(Boolean(value.waiting))))}).catch(()=>setError("App update check failed."));return()=>{removeEventListener("online",online);removeEventListener("offline",offlineEvent);removeEventListener("beforeinstallprompt",eligible);removeEventListener("appinstalled",appInstalled);navigator.serviceWorker?.removeEventListener("controllerchange",changed)}},[toast]);useEffect(()=>{if(!visible)return;const timer=setTimeout(close,15000);return()=>clearTimeout(timer)},[visible]);return <>{offline&&<div className="offline">Offline · reconnect to refresh content</div>}{update&&<button className="update" onClick={()=>registration.current?.waiting?.postMessage("SKIP_WAITING")}>Update available · Reload</button>}{error&&<div className="offline">{error}</div>}{visible&&<InstallPromotion prompt={prompt} ios={ios} onClose={close} onInstalled={()=>setVisible(false)}/>}<PushNotificationManager authenticated={Boolean(user)}/></>}
+export async function resetCachedAppData(){await Promise.all([unregisterInsightWorkers(),removeInsightCaches()]);location.reload()}

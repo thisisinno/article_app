@@ -1,10 +1,20 @@
 from django.contrib import admin
 from django.db.models import Count
 from django.utils import timezone
+from django.utils.html import format_html
+from django.forms.models import BaseInlineFormSet
+from django.core.exceptions import ValidationError
 from .models import Category, Tag, Post, Media, Comment
 from interactions.notifications import notify_new_post
 
-class MediaInline(admin.TabularInline):model=Media;extra=0
+class MediaInlineFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if sum(1 for form in self.forms if form.cleaned_data and not form.cleaned_data.get("DELETE",False))>10:raise ValidationError("A post can contain at most 10 media items.")
+class MediaInline(admin.TabularInline):
+    model=Media;extra=0;formset=MediaInlineFormSet;fields=("preview","file","sort_order","alt_text","width","height");readonly_fields=("preview","width","height");ordering=("sort_order","id");verbose_name_plural="Media (maximum 10; lower sort order appears first)"
+    @admin.display(description="Preview")
+    def preview(self,obj):return format_html('<img src="{}" style="width:90px;height:72px;object-fit:cover;border-radius:6px">',obj.file.url) if obj.pk and obj.file else "—"
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):

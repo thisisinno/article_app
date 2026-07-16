@@ -1,4 +1,7 @@
 import json
+from io import BytesIO
+from PIL import Image
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.admin.sites import AdminSite
 from django.test import TestCase,RequestFactory
 from django.utils import timezone
@@ -59,3 +62,17 @@ class CommentContractTests(TestCase):
         roots=[Comment.objects.create(post=self.post,author=self.author,body=f"Root {n}") for n in range(22)];response=self.client.get(f"/api/v1/posts/{self.post.id}/comments/");self.assertEqual(len(response.json()["results"]),20);self.assertTrue(response.json()["next_cursor"]);parent=roots[0];Comment.objects.create(post=self.post,parent=parent,author=self.author,body="Reply");parent.reply_count=1;parent.save(update_fields=("reply_count",));replies=self.client.get(f"/api/v1/comments/{parent.id}/replies/");self.assertEqual(replies.json()["total_count"],1)
     def test_reply_creation_returns_both_counts(self):
         parent=Comment.objects.create(post=self.post,author=self.author,body="Root");self.client.force_login(self.author);response=self.client.post(f"/api/v1/comments/{parent.id}/replies/",json.dumps({"body":"Nested"}),content_type="application/json");self.assertEqual(response.status_code,201);self.assertEqual(response.json()["parent_reply_count"],1);self.assertEqual(response.json()["post_comment_count"],1)
+
+class MultipleImageTests(TestCase):
+    def setUp(self):
+        self.category=Category.objects.get(slug="general");self.staff=User.objects.create_user("media-staff","media@example.com","password123",display_name="Media",is_staff=True);Profile.objects.create(user=self.staff);self.client.force_login(self.staff)
+    def image(self,index=0):
+        value=BytesIO();Image.new("RGB",(120+index,130+index),(index,20,30)).save(value,"PNG");return SimpleUploadedFile(f"image-{index}.png",value.getvalue(),content_type="image/png")
+    def publish(self,count):return self.client.post("/api/v1/posts/",{"body":"Gallery","category":self.category.slug,"images":[self.image(i) for i in range(count)]})
+    def test_one_five_and_ten_images_are_ordered(self):
+        for count in (1,5,10):
+            response=self.publish(count);self.assertEqual(response.status_code,201,response.content);self.assertEqual(len(response.json()["media"]),count);self.assertEqual([x["sort_order"] for x in response.json()["media"]],list(range(count)))
+    def test_eleven_images_are_rejected_without_post(self):
+        before=Post.objects.count();response=self.publish(11);self.assertEqual(response.status_code,400);self.assertEqual(response.json()["error"]["field"],"images");self.assertEqual(Post.objects.count(),before)
+    def test_corrupt_image_is_rejected(self):
+        response=self.client.post("/api/v1/posts/",{"body":"Bad","category":self.category.slug,"images":[SimpleUploadedFile("bad.png",b"not an image",content_type="image/png")]});self.assertEqual(response.status_code,400);self.assertEqual(response.json()["error"]["code"],"invalid_image")

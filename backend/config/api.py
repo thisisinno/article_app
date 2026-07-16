@@ -2,6 +2,7 @@ import json
 from functools import wraps
 from pathlib import Path
 from django.contrib.auth import authenticate, login, logout
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.db import transaction
@@ -11,14 +12,17 @@ from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
+from PIL import Image, UnidentifiedImageError
 from accounts.models import User, Profile
-from publishing.models import Post, Category, Comment
-from interactions.models import PostLike, PostBookmark, CommentLike, Notification
+from publishing.models import Post, Category, Comment, Media
+from interactions.models import PostLike, PostBookmark, CommentLike, Notification, WebPushSubscription
 from interactions.services import actor_kwargs, set_reaction, record_view, record_share
 from interactions.notifications import notify_new_post, notify_post_comment, notify_comment_reply, notify_comment_like, notify_post_share
 
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 MAX_IMAGE = 5 * 1024 * 1024
+MAX_IMAGES = 10
+MAX_TOTAL_IMAGES = 40 * 1024 * 1024
 
 def payload(request):
     if request.content_type and request.content_type.startswith("multipart/form-data"):
@@ -65,7 +69,11 @@ def post_json(p,request,full=False,viewer=None):
     liked = p.pk in viewer[0] if viewer else PostLike.objects.filter(post=p,**actor).exists()
     bookmarked = p.pk in viewer[1] if viewer else PostBookmark.objects.filter(post=p,**actor).exists()
     manageable=can_manage_post(request.user,p)
-    return {"id":str(p.pk),"type":p.post_type,"title":p.title,"body":p.body if full else p.body[:640],"excerpt":p.excerpt,"status":p.status,"author":user_json(p.author),"category":{"id":p.category_id,"name":p.category.name,"slug":p.category.slug} if p.category else None,"cover_image":media_url(p.cover_image),"pinned":p.pinned,"featured":p.featured,"published_at":(p.published_at or p.created_at).isoformat(),"counts":{"views":p.view_count,"likes":p.like_count,"comments":p.comment_count,"bookmarks":p.bookmark_count,"shares":p.share_count},"viewer_state":{"liked":liked,"bookmarked":bookmarked,"can_edit":manageable,"can_delete":manageable},"thread_root":str(p.thread_root_id) if p.thread_root_id else None,"thread_position":p.thread_position}
+    items=list(p.media.all())
+    media=[{"id":str(x.pk),"type":x.media_type,"url":media_url(x.file),"alt_text":x.alt_text,"width":x.width,"height":x.height,"sort_order":x.sort_order} for x in sorted(items,key=lambda x:(x.sort_order,x.pk))]
+    cover=media_url(p.cover_image)
+    if not media and cover:media=[{"id":f"cover:{p.pk}","type":"image","url":cover,"alt_text":"","width":None,"height":None,"sort_order":0}]
+    return {"id":str(p.pk),"type":p.post_type,"title":p.title,"body":p.body if full else p.body[:640],"excerpt":p.excerpt,"status":p.status,"author":user_json(p.author),"category":{"id":p.category_id,"name":p.category.name,"slug":p.category.slug} if p.category else None,"cover_image":cover,"media":media,"pinned":p.pinned,"featured":p.featured,"published_at":(p.published_at or p.created_at).isoformat(),"counts":{"views":p.view_count,"likes":p.like_count,"comments":p.comment_count,"bookmarks":p.bookmark_count,"shares":p.share_count},"viewer_state":{"liked":liked,"bookmarked":bookmarked,"can_edit":manageable,"can_delete":manageable},"thread_root":str(p.thread_root_id) if p.thread_root_id else None,"thread_position":p.thread_position}
 
 def serialize_posts(rows,request,full=False):
     ids=[x.pk for x in rows]; actor=actor_kwargs(request)
@@ -95,7 +103,20 @@ def paginated_newest(qs,request,limit=20):
 def validate_image(upload):
     if not upload:return
     if upload.content_type not in IMAGE_TYPES: raise ValidationError("Use a JPEG, PNG, WebP, or GIF image.")
-    if upload.size>MAX_IMAGE: raise ValidationError("Image files must be 5 MB or smaller.")
+    if upload.size>MAX_IMAGE: raise ValidationError("Each image must be 5 MB or smaller.")
+    try:
+        upload.seek(0)
+        with Image.open(upload) as image:
+            if image.format not in {"JPEG","PNG","WEBP","GIF"}:raise ValidationError("One of the selected images is invalid.")
+            image.verify()
+        upload.seek(0)
+        with Image.open(upload) as image:width,height=image.size
+        if width<100 or height<100 or width>12000 or height>12000:raise ValidationError("Images must be between 100×100 and 12000×12000 pixels.")
+        upload.seek(0)
+        return width,height
+    except (UnidentifiedImageError,OSError,ValueError,Image.DecompressionBombError):
+        upload.seek(0)
+        raise ValidationError("One of the selected images is invalid.")
 
 def health(request): return JsonResponse({"status":"ok"})
 def csrf(request): return JsonResponse({"csrfToken":get_token(request)})
@@ -120,7 +141,7 @@ def logout_view(request):logout(request);return JsonResponse({"ok":True})
 
 @require_http_methods(["GET"])
 def feed(request):
-    qs=Post.objects.filter(status="published",published_at__lte=timezone.now(),thread_root__isnull=True).select_related("author","author__profile","category")
+    qs=Post.objects.filter(status="published",published_at__lte=timezone.now(),thread_root__isnull=True).select_related("author","author__profile","category").prefetch_related("media")
     if request.GET.get("category"):qs=qs.filter(category__slug=request.GET["category"],category__is_active=True)
     rows,cursor=paginated_rows(qs,request)
     return JsonResponse({"results":serialize_posts(rows,request),"next_cursor":cursor})
@@ -139,20 +160,32 @@ def create_post(request):
     if typ==Post.Type.ARTICLE and not title:return error("Article title is required.",field="title",code="validation_error")
     category=Category.objects.filter(slug=d.get("category",""),is_active=True).first()
     if not category:return error("Select a valid active category.",field="category",code="invalid_category")
-    cover=request.FILES.get("cover_image")
-    try:validate_image(cover)
-    except ValidationError as exc:return error(exc.message,field="cover_image",code="invalid_image")
-    with transaction.atomic():
-        p=Post.objects.create(author=request.user,post_type=typ,title=title[:240],body=body,excerpt=d.get("excerpt","")[:400],category=category,cover_image=cover,status=Post.Status.PUBLISHED,published_at=timezone.now())
-        transaction.on_commit(lambda:notify_new_post(p))
+    images=request.FILES.getlist("images")
+    if not images and request.FILES.get("cover_image"):images=[request.FILES["cover_image"]]
+    if len(images)>MAX_IMAGES:return error("Select no more than 10 images.",field="images",code="too_many_images")
+    if sum(x.size for x in images)>MAX_TOTAL_IMAGES:return error("Selected images must total 40 MB or less.",field="images",code="request_too_large")
+    if len({(x.name,x.size) for x in images})!=len(images):return error("Remove duplicate images before publishing.",field="images",code="duplicate_image")
+    try:dimensions=[validate_image(image) for image in images]
+    except ValidationError as exc:return error(exc.message,field="images",code="invalid_image")
+    saved=[]
+    try:
+        with transaction.atomic():
+            p=Post.objects.create(author=request.user,post_type=typ,title=title[:240],body=body,excerpt=d.get("excerpt","")[:400],category=category,status=Post.Status.PUBLISHED,published_at=timezone.now())
+            alts=d.getlist("image_alt_texts") if hasattr(d,"getlist") else []
+            for index,(image,(width,height)) in enumerate(zip(images,dimensions)):
+                item=Media.objects.create(post=p,file=image,media_type="image",alt_text=(alts[index] if index<len(alts) else "")[:300],width=width,height=height,sort_order=index);saved.append(item.file.name)
+            transaction.on_commit(lambda:notify_new_post(p))
+    except Exception:
+        for name in saved:Media._meta.get_field("file").storage.delete(name)
+        raise
     return JsonResponse(post_json(p,request,True),status=201)
 
 @require_http_methods(["GET","PATCH","DELETE"])
 def post_detail(request,post_id):
-    p=get_object_or_404(Post.objects.select_related("author","author__profile","category"),pk=post_id)
+    p=get_object_or_404(Post.objects.select_related("author","author__profile","category").prefetch_related("media"),pk=post_id)
     if request.method=="GET":
         if p.status!="published":return error("Post unavailable.",404,code="not_found")
-        data=post_json(p,request,True);thread_rows=list(p.thread_entries.filter(status="published").select_related("author","author__profile","category"));data["thread"]=serialize_posts(thread_rows,request,True);return JsonResponse(data)
+        data=post_json(p,request,True);thread_rows=list(p.thread_entries.filter(status="published").select_related("author","author__profile","category").prefetch_related("media"));data["thread"]=serialize_posts(thread_rows,request,True);return JsonResponse(data)
     if not request.user.is_authenticated:return error("Authentication required",401,code="authentication_required")
     if not can_manage_post(request.user,p):return error("You cannot manage this post.",403,code="forbidden")
     if request.method=="DELETE":p.status="removed";p.removed_at=timezone.now();p.save(update_fields=("status","removed_at"));return JsonResponse({"deleted":True,"post_id":str(p.pk),"redirect":"/"})
@@ -264,7 +297,7 @@ def comment_like(request,comment_id):
 def categories(request):return JsonResponse({"results":[{"id":c.pk,"name":c.name,"slug":c.slug,"description":c.description} for c in Category.objects.filter(is_active=True).order_by("sort_order","name")]})
 
 def search(request):
-    q=request.GET.get("q","").strip();typ=request.GET.get("type","top");qs=Post.objects.filter(status="published",published_at__lte=timezone.now()).select_related("author","author__profile","category")
+    q=request.GET.get("q","").strip();typ=request.GET.get("type","top");qs=Post.objects.filter(status="published",published_at__lte=timezone.now()).select_related("author","author__profile","category").prefetch_related("media")
     if q:qs=qs.filter(Q(title__icontains=q)|Q(body__icontains=q)|Q(category__name__icontains=q))
     if request.GET.get("category"):qs=qs.filter(category__slug=request.GET["category"])
     if typ=="articles":qs=qs.filter(post_type="article")
@@ -287,7 +320,7 @@ def profile_posts(request,username):
         qs=Post.objects.filter(author=u,status="published")
         if tab=="articles":qs=qs.filter(post_type="article")
         elif tab=="posts":qs=qs.filter(post_type="short")
-    qs=qs.select_related("author","author__profile","category");rows,cursor=paginated_rows(qs,request);return JsonResponse({"results":serialize_posts(rows,request),"next_cursor":cursor})
+    qs=qs.select_related("author","author__profile","category").prefetch_related("media");rows,cursor=paginated_rows(qs,request);return JsonResponse({"results":serialize_posts(rows,request),"next_cursor":cursor})
 
 @api_login_required
 @require_http_methods(["PATCH"])
@@ -339,3 +372,26 @@ def notification_delete(request,notification_id):
 @api_login_required
 @require_http_methods(["DELETE"])
 def notifications_clear(request):deleted,_=request.user.notifications.all().delete();return JsonResponse({"deleted":deleted,"unread_count":0})
+
+def push_public_key(request):
+    if not settings.WEB_PUSH_ENABLED or not settings.VAPID_PUBLIC_KEY:return error("Web Push is not configured.",503,code="push_not_configured")
+    return JsonResponse({"public_key":settings.VAPID_PUBLIC_KEY})
+
+@api_login_required
+def push_status(request):
+    endpoint=request.GET.get("endpoint","")
+    return JsonResponse({"subscribed":bool(endpoint and request.user.push_subscriptions.filter(endpoint=endpoint,active=True).exists()),"permission_required":True})
+
+@api_login_required
+@require_http_methods(["POST","DELETE"])
+def push_subscribe(request):
+    d=payload(request);endpoint=d.get("endpoint","")
+    if not isinstance(endpoint,str) or not endpoint.startswith("https://") or len(endpoint)>1000:return error("Enter a valid Push endpoint.",field="endpoint",code="invalid_subscription")
+    if request.method=="DELETE":
+        updated=request.user.push_subscriptions.filter(endpoint=endpoint).update(active=False)
+        return JsonResponse({"subscribed":False,"removed":bool(updated)})
+    keys=d.get("keys") or {};p256dh=keys.get("p256dh","");auth=keys.get("auth","")
+    if not isinstance(p256dh,str) or len(p256dh)<40 or not isinstance(auth,str) or len(auth)<8:return error("Push subscription keys are invalid.",field="keys",code="invalid_subscription")
+    if not request.user.push_subscriptions.filter(active=True).filter(~Q(endpoint=endpoint)).count()<10:return error("Too many active devices.",409,code="subscription_limit")
+    WebPushSubscription.objects.update_or_create(endpoint=endpoint,defaults={"user":request.user,"p256dh":p256dh,"auth":auth,"expiration_time":d.get("expirationTime"),"user_agent":request.headers.get("User-Agent","")[:300],"active":True,"failure_count":0})
+    return JsonResponse({"subscribed":True})
