@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Insight - Home Feed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#0f0069",
+                    "tertiary-container": "#151c27",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#151c27",
+                    "surface-container-low": "#f3f4f5",
+                    "surface-container": "#edeeef",
+                    "on-secondary-container": "#fffbff",
+                    "primary-fixed-dim": "#c8c6c5",
+                    "surface-variant": "#e1e3e4",
+                    "on-background": "#191c1d",
+                    "on-tertiary-container": "#7d8492",
+                    "tertiary-fixed-dim": "#c0c7d6",
+                    "surface": "#f8f9fa",
+                    "secondary-container": "#645efb",
+                    "surface-container-high": "#e7e8e9",
+                    "on-error-container": "#93000a",
+                    "outline": "#747878",
+                    "surface-bright": "#f8f9fa",
+                    "primary": "#000000",
+                    "on-secondary-fixed-variant": "#3323cc",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-primary": "#c8c6c5",
+                    "surface-container-highest": "#e1e3e4",
+                    "secondary": "#4b41e1",
+                    "outline-variant": "#c4c7c7",
+                    "primary-container": "#1c1b1b",
+                    "on-primary-container": "#858383",
+                    "on-surface": "#191c1d",
+                    "on-surface-variant": "#444748",
+                    "surface-dim": "#d9dadb",
+                    "on-tertiary-fixed-variant": "#404754",
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#f0f1f2",
+                    "secondary-fixed-dim": "#c3c0ff",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#5f5e5e",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#e5e2e1",
+                    "background": "#f8f9fa",
+                    "secondary-fixed": "#e2dfff",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#dce2f3",
+                    "inverse-surface": "#2e3132",
+                    "on-primary-fixed-variant": "#474746",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#1c1b1b",
+                    "tertiary": "#000000"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-md": "16px",
+                    "gutter": "24px",
+                    "stack-lg": "32px",
+                    "container-max": "1120px",
+                    "margin-mobile": "16px",
+                    "stack-xl": "64px",
+                    "article-max": "680px",
+                    "stack-sm": "8px"
+            },
+            "fontFamily": {
+                    "article-body": [
+                            "\"Source Serif 4\""
+                    ],
+                    "label-caps": [
+                            "Geist"
+                    ],
+                    "article-body-mobile": [
+                            "\"Source Serif 4\""
+                    ],
+                    "interface-sm": [
+                            "Geist"
+                    ],
+                    "interface-md": [
+                            "Geist"
+                    ],
+                    "display-lg-mobile": [
+                            "\"Source Serif 4\""
+                    ],
+                    "display-lg": [
+                            "\"Source Serif 4\""
+                    ]
+            },
+            "fontSize": {
+                    "article-body": [
+                            "20px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "article-body-mobile": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "interface-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "interface-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "display-lg-mobile": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Hide scrollbar for category filter */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-interface-md text-interface-md antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopNavBar (Mobile Only) -->
+<nav class="md:hidden fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant">
+<div class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary">Insight</div>
+<div class="flex items-center gap-stack-sm">
+<button aria-label="Notifications" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+<button aria-label="Bookmarks" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-primary">bookmark</span>
+</button>
+<button aria-label="Profile" class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User avatar" class="w-full h-full object-cover" data-alt="A minimalist black and white headshot portrait of a professional graphic designer, featuring strong contrast, soft studio lighting, and a clean white background. The subject is looking directly at the camera with a calm expression. The image is cropped in a perfect square." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuWxClMGCY2YZd_t2huAX5tYSJzoBbAAo0cfsR1ojMKZVdq_b0o8VM2D78OaA1T6TWCsXzRcXWpuaBt_G6L6UXwoEPtOkK9Pn8WHgWIa0Wl8KlRdZscHMQ91dxYApSzhMTrVYmgP_0rQS3lY4vgH7p-xhsva5dFN3ugtVfiZ2aN7KyjyWwGI1odB_KUltJhlhhVLglqxZF1AeJZfyb5c4QvfbAuy5QTuvFI_-mJhzH9WxHU7rv41m_O029g2XajtdxQb09c4qjvt58"/>
+</button>
+</div>
+</nav>
+<!-- Main Layout Grid -->
+<div class="max-w-container-max mx-auto w-full grid grid-cols-1 md:grid-cols-[256px_1fr] lg:grid-cols-[256px_1fr_320px] min-h-screen pt-16 md:pt-0">
+<!-- SideNavBar (Desktop/Tablet) -->
+<aside class="hidden md:flex flex-col fixed left-0 top-0 h-full w-[256px] p-gutter gap-stack-md bg-surface border-r border-outline-variant z-40">
+<!-- Brand -->
+<div class="mb-stack-lg">
+<div class="font-display-lg text-display-lg font-bold text-primary">Insight</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant mt-1">Editorial Social</div>
+</div>
+<!-- Main Nav -->
+<nav class="flex-1 flex flex-col gap-2">
+<a aria-current="page" class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold bg-surface-container transition-transform translate-x-1" href="#">
+<span class="material-symbols-outlined icon-fill">home</span>
+<span>Home</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">search</span>
+<span>Search</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span>Chat</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span>Bookmarks</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span>Profile</span>
+</a>
+<!-- CTA -->
+<button class="mt-stack-md w-full py-3 bg-primary text-on-primary rounded-full font-interface-md text-interface-md hover:bg-primary/90 transition-colors shadow-sm">
+                    Create Post
+                </button>
+</nav>
+<!-- Footer Nav -->
+<div class="mt-auto flex flex-col gap-2 pt-stack-md border-t border-outline-variant">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-interface-sm text-interface-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-interface-sm text-interface-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span>Help</span>
+</a>
+</div>
+<!-- Mini Profile -->
+<div class="mt-stack-md flex items-center gap-3 p-3 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer border border-transparent hover:border-outline-variant">
+<img alt="User avatar" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A minimalist black and white headshot portrait of a professional graphic designer, featuring strong contrast, soft studio lighting, and a clean white background. The subject is looking directly at the camera with a calm expression. The image is cropped in a perfect square." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFapo8149T7S5kdX_i8CMfdHwl5rkH7gyxohxXZ8DHfWlo3jpGkU_4FBn0AjRElhvIOn7uVNvgGY1SyHPjhSjBPrLomNok25zC1usXhqsl37IQiiwSlYy67fxer2dbe9jGhoaQt9NzaHp-VgWZRF2DPcAbyUi03GeJEJt1g0866tAcCJFqS657QEb6FazzfrnZPqt9un3FjZVtrkZa7DUkNsAGsGceT9cvOr1YUvUOD83wVIEbPCSEoMJ7yKbtJfChS0bWfIKtqTeZ"/>
+<div class="flex-1 min-w-0">
+<div class="font-interface-sm text-interface-sm font-bold text-primary truncate">Alex Rivera</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant truncate">@arivera</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">more_horiz</span>
+</div>
+</aside>
+<!-- Center Column (Feed) -->
+<main class="md:ml-[256px] flex flex-col w-full max-w-[680px] mx-auto md:mx-0 md:px-gutter pb-32 md:pb-8 border-r border-outline-variant min-h-screen">
+<!-- Sticky Header -->
+<header class="sticky top-16 md:top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-outline-variant pt-stack-sm md:pt-stack-md px-margin-mobile md:px-0">
+<div class="flex items-center justify-between mb-4 hidden md:flex">
+<h1 class="font-display-lg text-display-lg font-bold text-primary">Home</h1>
+</div>
+<!-- Feed Tabs -->
+<div class="flex w-full border-b border-outline-variant">
+<button class="flex-1 py-3 text-primary font-bold border-b-2 border-primary transition-colors hover:bg-surface-container-low">
+                        For You
+                    </button>
+<button class="flex-1 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low border-b-2 border-transparent">
+                        Following
+                    </button>
+</div>
+</header>
+<div class="px-margin-mobile md:px-0 py-stack-md">
+<!-- Category Filter -->
+<div class="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-stack-lg mask-edge">
+<button class="px-4 py-1.5 rounded bg-primary text-on-primary font-interface-sm text-interface-sm whitespace-nowrap shadow-sm">All</button>
+<button class="px-4 py-1.5 rounded bg-surface-container text-on-surface-variant hover:bg-surface-variant font-interface-sm text-interface-sm whitespace-nowrap transition-colors">Technology</button>
+<button class="px-4 py-1.5 rounded bg-surface-container text-on-surface-variant hover:bg-surface-variant font-interface-sm text-interface-sm whitespace-nowrap transition-colors">Business</button>
+<button class="px-4 py-1.5 rounded bg-surface-container text-on-surface-variant hover:bg-surface-variant font-interface-sm text-interface-sm whitespace-nowrap transition-colors">Culture</button>
+<button class="px-4 py-1.5 rounded bg-surface-container text-on-surface-variant hover:bg-surface-variant font-interface-sm text-interface-sm whitespace-nowrap transition-colors">Design</button>
+<button class="px-4 py-1.5 rounded bg-surface-container text-on-surface-variant hover:bg-surface-variant font-interface-sm text-interface-sm whitespace-nowrap transition-colors">Science</button>
+<button class="px-4 py-1.5 rounded bg-surface-container text-on-surface-variant hover:bg-surface-variant font-interface-sm text-interface-sm whitespace-nowrap transition-colors">Lifestyle</button>
+</div>
+<!-- Post Composer (Bento/Glass style) -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-md mb-stack-xl shadow-sm hover:border-outline transition-colors">
+<div class="flex gap-3">
+<img alt="User avatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-outline-variant" data-alt="A minimalist black and white headshot portrait of a professional graphic designer, featuring strong contrast, soft studio lighting, and a clean white background. The subject is looking directly at the camera with a calm expression. The image is cropped in a perfect square." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9y142nG1Irb4j4s0kIuaAxYMz6OHzzHS6heIqhHTWfN7yGrutMkemB1TWGG5Pyuhc5b7_0keLFhgJWQSRTDaMfkRphpRGhJuhjBvS4WI7lp-Ryseu5RnEiDNuOKRNvUKmG4rUY14FM8Shc0anEG7qQK1_xM-cuAunfrFHslObvhCbP0LbA5xA9NC5hgnuCLmJMwbAkx8oxVNbc0_bnS4A3u650C5dmXYaalLsIN0wHzk2WCd48U3jBOsENdiJh3q5pOWl0I57avQ3"/>
+<div class="flex-1">
+<textarea class="w-full bg-transparent border-none focus:ring-0 p-0 text-article-body text-primary placeholder-on-surface-variant resize-none" placeholder="Share an idea, story, or update..." rows="2"></textarea>
+</div>
+</div>
+<div class="border-t border-outline-variant mt-4 pt-3 flex justify-between items-center">
+<div class="flex gap-1">
+<button aria-label="Add Media" class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">image</span>
+</button>
+<button aria-label="Add Article" class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">article</span>
+</button>
+<button aria-label="Set Category" class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">label</span>
+</button>
+</div>
+<button class="px-5 py-2 bg-primary text-on-primary rounded-full font-interface-sm text-interface-sm font-medium hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50" disabled="">
+                            Publish
+                        </button>
+</div>
+</div>
+<!-- Feed Stream -->
+<div class="flex flex-col gap-stack-lg">
+<!-- 1. Short Text Post -->
+<article class="group pb-stack-lg border-b border-outline-variant last:border-0">
+<div class="flex gap-3 mb-2">
+<img alt="Author avatar" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A close up, minimalist portrait photo of a female writer with glasses. Clean white background, high key lighting, very sharp focus, professional and intellectual aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxr2lF7uygWmdYyzXT6ItieB3wXsCbFWfczj0MCqVBTKJmc3v3dqs8Yf4yPYIAv5vQmLB9H_BdK-JVybtAGhkNMRueQFM1buT6t9ggLRkckDeQtY4uxv-1SVyr2irT7NPPdUogQhkzegw3IWUytGdBg4_BzsJ5oYzoBUFK4llybiZp1VJ_73gnAaUsJhrMrHraGpsoRAi1dZA5vddjHEImrzeqtHtuKhW6wQBUUXoBQMTCBZ0Skd6R4hD0IsvsBVhtcrpNlim3p_Ad"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1">
+<span class="font-interface-sm text-interface-sm font-bold text-primary hover:underline cursor-pointer">Sarah Chen</span>
+<span class="material-symbols-outlined text-[14px] text-secondary">verified</span>
+<span class="font-interface-sm text-interface-sm text-on-surface-variant">· 2h</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Design</span>
+</div>
+<button class="ml-auto text-on-surface-variant hover:text-primary rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+<div class="pl-[52px]">
+<p class="font-interface-md text-interface-md text-primary mb-4">
+                                The resurgence of brutalist web design isn't just a trend—it's a reaction to the overly polished, homogenous SaaS aesthetic of the last decade. It prioritizes raw functionality over decorative comfort.
+                            </p>
+<div class="flex items-center gap-6 text-on-surface-variant">
+<button class="flex items-center gap-1.5 hover:text-secondary transition-colors group/btn">
+<span class="material-symbols-outlined text-[18px] group-hover/btn:icon-fill">favorite</span>
+<span class="font-interface-sm text-interface-sm">124</span>
+</button>
+<button class="flex items-center gap-1.5 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">chat_bubble</span>
+<span class="font-interface-sm text-interface-sm">12</span>
+</button>
+<button class="flex items-center gap-1.5 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">repeat</span>
+</button>
+<button class="flex items-center gap-1.5 hover:text-primary transition-colors ml-auto">
+<span class="material-symbols-outlined text-[18px]">bookmark</span>
+</button>
+</div>
+</div>
+</article>
+<!-- 2. Article Preview (Bento Card) -->
+<article class="group pb-stack-lg border-b border-outline-variant last:border-0">
+<div class="flex gap-3 mb-3">
+<img alt="Author avatar" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A minimalist portrait photo of a male tech journalist in a dark turtleneck. Clean white background, moody studio lighting with a slight rim light, very sharp focus, professional and intellectual aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHW5V_3yeD4wbIwTrsqXfo4TM62rYG838axey2kZZk967o04I3x6vWeBEMyGvocEjkiAvBtpa-f58kb8NdHqEfn7oQYRYXCFM-LIFCK4dm0K8adrCvN0TJ9K1bp9PUwedHHFe382OshvOsfr4wuDFTJoUIjOKI8sw6GHUSkFnGibXFRMzjMaMC2ImZy9M3tlvkCuaksVaPgTf60kRsVB8mEE5f3z8jL5Atr2us-Ol7Ub7edarnwbp3JKNLlO6R0dIqrgf0JdMwVHX2"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1">
+<span class="font-interface-sm text-interface-sm font-bold text-primary hover:underline cursor-pointer">Marcus Wright</span>
+<span class="font-interface-sm text-interface-sm text-on-surface-variant">· 5h</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Technology</span>
+</div>
+</div>
+<div class="pl-[52px]">
+<!-- Article Card -->
+<a class="block bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors mb-4 group/card" href="#">
+<div class="h-48 w-full bg-surface-container overflow-hidden">
+<img alt="Article cover image" class="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500 ease-out" data-alt="A highly stylized, minimalist architectural 3D rendering of a futuristic interface floating in a clean, stark white gallery space. The interface elements are made of frosted glass with thin dark borders. The lighting is soft and diffused, creating subtle shadows and a serene, intellectual atmosphere. The color palette is strictly neutral with very slight hints of cool blue." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMwK-QxLJYaCkE6poaMT5Nk0hN4J_ebnv6S9WnBzotehaNMQRMvoRNzDOIVOKRK0V701_iElBBVvDjo4NkmRZiYK6eT2C7nmRB3rxczbrLG2SyfLx6qt9B_EiQuaPNv6S9nf4ZRbZNxidfFhRPgNGL1POqTm87p5jTEAc21V54G14AeFgHTVLYn1Le-EF5Yn7U-aFJ34kmiiPfWxlBs6kbfY34cS9bQ85iTO5Rx9K7CmRW3bK4ygtoruW9wuIKzP6cqo-5mhRTtcVs"/>
+</div>
+<div class="p-4">
+<h2 class="font-article-body text-article-body font-bold text-primary mb-2 line-clamp-2">The Future of Minimalist UI: Beyond the Whitespace</h2>
+<p class="font-interface-sm text-interface-sm text-on-surface-variant mb-3 line-clamp-2">
+                                        As screen fatigue peaks, the next evolution of interface design focuses not just on visual reduction, but on cognitive ease. We explore how leading designers are creating 'quiet' software.
+                                    </p>
+<div class="flex items-center gap-2 font-interface-sm text-interface-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span>6 min read</span>
+</div>
+</div>
+</a>
+<div class="flex items-center gap-6 text-on-surface-variant">
+<button class="flex items-center gap-1.5 hover:text-secondary transition-colors group/btn">
+<span class="material-symbols-outlined text-[18px] group-hover/btn:icon-fill">favorite</span>
+<span class="font-interface-sm text-interface-sm">892</span>
+</button>
+<button class="flex items-center gap-1.5 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">chat_bubble</span>
+<span class="font-interface-sm text-interface-sm">45</span>
+</button>
+<button class="flex items-center gap-1.5 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">repeat</span>
+<span class="font-interface-sm text-interface-sm">12</span>
+</button>
+<button class="flex items-center gap-1.5 hover:text-primary transition-colors ml-auto">
+<span class="material-symbols-outlined text-[18px]">bookmark</span>
+</button>
+</div>
+</div>
+</article>
+<!-- 3. Image Post -->
+<article class="group pb-stack-lg border-b border-outline-variant last:border-0">
+<div class="flex gap-3 mb-3">
+<img alt="Author avatar" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A minimalist black and white headshot portrait of an architectural photographer, featuring strong contrast, soft studio lighting, and a clean white background. The subject is looking directly at the camera with a calm expression. The image is cropped in a perfect square." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6Ksav9UsWNjJcLyYWh-hy37oOCo3JWdOTzvKiH-mPZpGs0UjNp1Ws_K39xj7uBBIpGO4mGvq6VuhS90ROwlAXW5lJZ4-TamASfwp6cs2SzZHHCX18iPOkhYiLoOL1h--QucOxzH_TlXg9Yj4tQK0yWG0hojtsk12ATJ73jyz-wguEQ1n4ksDy2plrso0DrY1zoSd5aQ26dPCrL-xxuaYjGTcEkjwYDjm03DgkJB0Sfy7x6Uckz3dEnfb48wtAjMuwCfLqzW_na9-q"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1">
+<span class="font-interface-sm text-interface-sm font-bold text-primary hover:underline cursor-pointer">Elena Rostova</span>
+<span class="font-interface-sm text-interface-sm text-on-surface-variant">· 8h</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Architecture</span>
+</div>
+</div>
+<div class="pl-[52px]">
+<p class="font-interface-md text-interface-md text-primary mb-3">
+                                The brutalist concrete forms of the new central library interacting with the harsh midday sun. The structural integrity becomes the primary ornament.
+                            </p>
+<div class="rounded-xl overflow-hidden border border-outline-variant mb-4 bg-surface-container">
+<img alt="Architectural photography" class="w-full h-auto max-h-[500px] object-cover" data-alt="A stunning, high-contrast black and white architectural photograph of a brutalist concrete building. Strong, dramatic shadows are cast by harsh midday sunlight, highlighting the geometric forms and raw texture of the concrete. The composition is highly structured, emphasizing lines and negative space against a clear, blank sky." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYOzST-XFq3Pk5iMeqKVYyNTo_3PyxoCtH1MdEGO6fhz8JwG1iCdnhPRsGbciBpNXu--_Rdb0cV9JGtTVS41eTZtcY3nE5SGngyHW5pIBSQI99LHTLwD-xzYenREnTLyHnukCofEG5dOcX_6wVbvHAKuAntS4OY6G-lJMcA6VtWvTIhXDntfuGUvKg5MQVj9V86zgXdE2CH6plctpyQLy9fAhxSy1EvpHxnS6xsk6LVY0AmRb3USgjTDc8l__mV9fdmOORb4FoZvsG"/>
+</div>
+<div class="flex items-center gap-6 text-on-surface-variant">
+<button class="flex items-center gap-1.5 hover:text-secondary transition-colors group/btn">
+<span class="material-symbols-outlined text-[18px] group-hover/btn:icon-fill text-secondary">favorite</span>
+<span class="font-interface-sm text-interface-sm text-secondary">2.4k</span>
+</button>
+<button class="flex items-center gap-1.5 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">chat_bubble</span>
+<span class="font-interface-sm text-interface-sm">128</span>
+</button>
+<button class="flex items-center gap-1.5 hover:text-primary transition-colors ml-auto">
+<span class="material-symbols-outlined text-[18px]">bookmark</span>
+</button>
+</div>
+</div>
+</article>
+</div>
+</div>
+</main>
+<!-- Right Column (Trends/Suggestions) -->
+<aside class="hidden lg:block w-[320px] px-gutter py-stack-md sticky top-0 h-screen overflow-y-auto no-scrollbar">
+<!-- Search Bar -->
+<div class="relative mb-stack-lg">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full bg-surface-container border border-transparent focus:border-secondary focus:bg-surface-container-lowest focus:ring-0 rounded-full py-2.5 pl-10 pr-4 font-interface-sm text-interface-sm text-primary placeholder-on-surface-variant transition-colors" placeholder="Search Insight..." type="text"/>
+</div>
+<!-- Trending Categories Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 mb-stack-lg">
+<h3 class="font-interface-md text-interface-md font-bold text-primary mb-4">Trending Topics</h3>
+<div class="flex flex-col gap-4">
+<a class="group" href="#">
+<div class="flex justify-between items-start">
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Design · Trending</div>
+<div class="font-interface-md text-interface-md font-bold text-primary group-hover:text-secondary transition-colors">#MinimalistUI</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant mt-0.5">14.5k posts</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+</a>
+<a class="group" href="#">
+<div class="flex justify-between items-start">
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Technology · Trending</div>
+<div class="font-interface-md text-interface-md font-bold text-primary group-hover:text-secondary transition-colors">Spatial Computing</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant mt-0.5">8,230 posts</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+</a>
+<a class="group" href="#">
+<div class="flex justify-between items-start">
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Culture · Trending</div>
+<div class="font-interface-md text-interface-md font-bold text-primary group-hover:text-secondary transition-colors">Digital Minimalism</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant mt-0.5">5,102 posts</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+</a>
+</div>
+<a class="block mt-4 pt-4 border-t border-outline-variant font-interface-sm text-interface-sm text-secondary hover:underline" href="#">
+                    Show more trends
+                </a>
+</div>
+<!-- Suggested Creators -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4">
+<h3 class="font-interface-md text-interface-md font-bold text-primary mb-4">Suggested Creators</h3>
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-3 min-w-0">
+<img alt="Creator avatar" class="w-10 h-10 rounded-full object-cover border border-outline-variant flex-shrink-0" data-alt="A minimalist black and white headshot portrait of a professional graphic designer, featuring strong contrast, soft studio lighting, and a clean white background. The subject is looking directly at the camera with a calm expression. The image is cropped in a perfect square." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUO6Ct3f9CPInyvfBE3RBnLWgQZ-W2THBmtNaDcoj4VPAiQ8AR6ZJTD9ZKkzWxkWYyNo2UEgbjwQMHou8tEU9qIGIx3DnYujTDa5PxpSbzxsDhS0hnl4ZgFOUEHWSl2HU6VQ2MpPSlypvpiV680UmAsWtru3uL07gqsQ2h4z_X4jYyKrXtfatsRvnVxw8zFW0UZbkvY4UPu82T4VRFL-iIPMsvuZvaciqH5F2M5Q6wHXVS0s0wWHViqKB5f7TQXRKQtwz6tnMhIM-Y"/>
+<div class="min-w-0">
+<div class="font-interface-sm text-interface-sm font-bold text-primary truncate hover:underline cursor-pointer">David K.</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant truncate">Editor at DesignLab</div>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-full border border-primary text-primary font-interface-sm text-interface-sm font-medium hover:bg-surface-container-low transition-colors flex-shrink-0">
+                            Follow
+                        </button>
+</div>
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-3 min-w-0">
+<img alt="Creator avatar" class="w-10 h-10 rounded-full object-cover border border-outline-variant flex-shrink-0" data-alt="A minimalist black and white headshot portrait of an architectural photographer, featuring strong contrast, soft studio lighting, and a clean white background. The subject is looking directly at the camera with a calm expression. The image is cropped in a perfect square." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgfmolCq7Z3Exqku5vIzOrsOpuTnHUr55aGgYyBKAyVlsuCeFkPeRjLOAnjC1eS1F87Oem2Z6203R9jh7E60KyeVitWt-gmf4MF2zDdUcBZVz9Df81TWBQdxb_LnHLlJDcz3o_dTw-vi0WT9X1yMblg8KWiOquU0qCAUTPmwoDVOiwhB_wHzFrIG_BZrgrrp7hlBVxmRZzpzFrmoxKwkOZ02mIBiec4bU-eMZwwCdkLix8UURUCgtMeHppLQGSUdLTEhNs_ZwpGoZk"/>
+<div class="min-w-0">
+<div class="font-interface-sm text-interface-sm font-bold text-primary truncate hover:underline cursor-pointer">Maya Lin</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant truncate">Tech Ethicist</div>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-full border border-primary text-primary font-interface-sm text-interface-sm font-medium hover:bg-surface-container-low transition-colors flex-shrink-0">
+                            Follow
+                        </button>
+</div>
+</div>
+</div>
+<!-- Footer Links -->
+<div class="mt-stack-md flex flex-wrap gap-x-3 gap-y-1 px-2">
+<a class="font-interface-sm text-[12px] text-on-surface-variant hover:underline" href="#">Terms</a>
+<a class="font-interface-sm text-[12px] text-on-surface-variant hover:underline" href="#">Privacy Policy</a>
+<a class="font-interface-sm text-[12px] text-on-surface-variant hover:underline" href="#">Cookie Policy</a>
+<a class="font-interface-sm text-[12px] text-on-surface-variant hover:underline" href="#">Accessibility</a>
+<a class="font-interface-sm text-[12px] text-on-surface-variant hover:underline" href="#">Ads Info</a>
+<span class="font-interface-sm text-[12px] text-on-surface-variant">© 2024 Insight</span>
+</div>
+</aside>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-stack-sm bg-surface/95 backdrop-blur-md pb-safe border-t border-outline-variant shadow-sm">
+<a aria-current="page" class="flex flex-col items-center gap-1 text-secondary scale-95 active:scale-90 transition-transform active:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined icon-fill">home</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant scale-95 active:scale-90 transition-transform active:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Search</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant scale-95 active:scale-90 transition-transform active:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Chat</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant scale-95 active:scale-90 transition-transform active:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Profile</span>
+</a>
+</nav>
+<!-- Mobile FAB for Create Post -->
+<button class="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-primary/90 transition-colors active:scale-95">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</body></html>

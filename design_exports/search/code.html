@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Insight - Search</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed": "#0f0069",
+                      "tertiary-container": "#151c27",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed": "#151c27",
+                      "surface-container-low": "#f3f4f5",
+                      "surface-container": "#edeeef",
+                      "on-secondary-container": "#fffbff",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "surface-variant": "#e1e3e4",
+                      "on-background": "#191c1d",
+                      "on-tertiary-container": "#7d8492",
+                      "tertiary-fixed-dim": "#c0c7d6",
+                      "surface": "#f8f9fa",
+                      "secondary-container": "#645efb",
+                      "surface-container-high": "#e7e8e9",
+                      "on-error-container": "#93000a",
+                      "outline": "#747878",
+                      "surface-bright": "#f8f9fa",
+                      "primary": "#000000",
+                      "on-secondary-fixed-variant": "#3323cc",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-primary": "#c8c6c5",
+                      "surface-container-highest": "#e1e3e4",
+                      "secondary": "#4b41e1",
+                      "outline-variant": "#c4c7c7",
+                      "primary-container": "#1c1b1b",
+                      "on-primary-container": "#858383",
+                      "on-surface": "#191c1d",
+                      "on-surface-variant": "#444748",
+                      "surface-dim": "#d9dadb",
+                      "on-tertiary-fixed-variant": "#404754",
+                      "on-tertiary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f2",
+                      "secondary-fixed-dim": "#c3c0ff",
+                      "on-error": "#ffffff",
+                      "surface-tint": "#5f5e5e",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#e5e2e1",
+                      "background": "#f8f9fa",
+                      "secondary-fixed": "#e2dfff",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed": "#dce2f3",
+                      "inverse-surface": "#2e3132",
+                      "on-primary-fixed-variant": "#474746",
+                      "on-secondary": "#ffffff",
+                      "on-primary-fixed": "#1c1b1b",
+                      "tertiary": "#000000"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "stack-md": "16px",
+                      "gutter": "24px",
+                      "stack-lg": "32px",
+                      "container-max": "1120px",
+                      "margin-mobile": "16px",
+                      "stack-xl": "64px",
+                      "article-max": "680px",
+                      "stack-sm": "8px"
+              },
+              "fontFamily": {
+                      "article-body": [
+                              "\"Source Serif 4\""
+                      ],
+                      "label-caps": [
+                              "Geist"
+                      ],
+                      "article-body-mobile": [
+                              "\"Source Serif 4\""
+                      ],
+                      "interface-sm": [
+                              "Geist"
+                      ],
+                      "interface-md": [
+                              "Geist"
+                      ],
+                      "display-lg-mobile": [
+                              "\"Source Serif 4\""
+                      ],
+                      "display-lg": [
+                              "\"Source Serif 4\""
+                      ]
+              },
+              "fontSize": {
+                      "article-body": [
+                              "20px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "article-body-mobile": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "interface-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "interface-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;700&display=swap');
+        
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        
+        /* Hide scrollbar for cleaner UI but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen font-article-body flex">
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden lg:flex flex-col fixed left-0 top-0 h-full p-gutter gap-stack-md docked left-0 h-full w-64 border-r border-outline-variant dark:border-outline bg-surface dark:bg-background z-40">
+<div class="font-display-lg text-display-lg font-bold text-primary dark:text-on-background mb-stack-lg">
+            Insight
+        </div>
+<div class="flex-1 flex flex-col gap-2 font-interface-md text-interface-md">
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-low dark:hover:bg-tertiary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">home</span>
+                Home
+            </a>
+<!-- Active Search Tab -->
+<a class="flex items-center gap-3 p-3 rounded-lg text-primary dark:text-secondary-fixed-dim font-bold bg-surface-container dark:bg-tertiary-container Active: translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1, 'wght' 400;">search</span>
+                Search
+            </a>
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-low dark:hover:bg-tertiary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">chat_bubble</span>
+                Chat
+            </a>
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-low dark:hover:bg-tertiary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">bookmark</span>
+                Bookmarks
+            </a>
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-low dark:hover:bg-tertiary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">person</span>
+                Profile
+            </a>
+</div>
+<button class="w-full py-3 px-6 bg-primary text-on-primary font-interface-md text-interface-md rounded-lg hover:bg-primary/90 transition-colors mt-auto mb-stack-md">
+            Create Post
+        </button>
+<div class="flex flex-col gap-2 font-interface-md text-interface-md border-t border-outline-variant pt-4">
+<a class="flex items-center gap-3 p-2 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-low dark:hover:bg-tertiary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 p-2 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-low dark:hover:bg-tertiary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">help</span>
+                Help
+            </a>
+</div>
+</nav>
+<!-- TopNavBar (Mobile/Tablet) -->
+<header class="lg:hidden fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant dark:border-outline">
+<div class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary dark:text-on-background">
+            Insight
+        </div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer" style="font-variation-settings: 'wght' 300;">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer" style="font-variation-settings: 'wght' 300;">bookmark</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar of a professional in a minimalist setting, high contrast black and white photography, clean editorial style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXbeSz2Qn4tTUbHA3FgQccIZO_UEIz_VGyAvJF4bt9--P7OzRg15nbxcQ1pL4RF7MxTRFYvmdmzX2W_8URCa0Yp49F00lNCBYCbIhejG9pjDLMeueNYBhNSDd_KbvmCbDvdAAY7vWP7ecvFrU6GLXHxiPPsT2f7ALPLV60juo86t8NndqrRaS1v-MKSfXlYvxLajVhs36sNveSwgav4QLpW2ZO-5OwtDjLdHJWFgH8JXyamn11epcXmYTHhcV6S0_mTv4BMp485Llt"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 lg:ml-64 pt-20 lg:pt-0 min-h-screen flex flex-col md:flex-row pb-24 lg:pb-0">
+<!-- Central Content Canvas -->
+<div class="flex-1 w-full max-w-[1120px] mx-auto px-margin-mobile lg:px-gutter py-stack-lg lg:py-stack-xl flex flex-col gap-stack-xl">
+<!-- Search Header -->
+<section class="flex flex-col gap-stack-md max-w-article-max mx-auto w-full">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-secondary transition-colors" style="font-variation-settings: 'wght' 300;">search</span>
+<input class="w-full h-14 pl-12 pr-4 bg-surface-container-lowest border border-outline-variant rounded-lg font-interface-md text-interface-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" placeholder="Search Insight..." type="text" value="Technology"/>
+</div>
+<!-- Filter Tabs -->
+<div class="flex items-center gap-4 overflow-x-auto no-scrollbar pb-2 font-interface-md text-interface-md border-b border-outline-variant">
+<button class="px-2 py-3 text-on-surface-variant hover:text-primary whitespace-nowrap transition-colors">Top</button>
+<button class="px-2 py-3 text-on-surface-variant hover:text-primary whitespace-nowrap transition-colors">Latest</button>
+<button class="px-2 py-3 text-on-surface-variant hover:text-primary whitespace-nowrap transition-colors">People</button>
+<button class="px-2 py-3 text-on-surface-variant hover:text-primary whitespace-nowrap transition-colors">Posts</button>
+<button class="px-2 py-3 text-on-surface-variant hover:text-primary whitespace-nowrap transition-colors">Articles</button>
+<button class="px-2 py-3 text-primary font-bold border-b-2 border-primary whitespace-nowrap transition-colors">Categories</button>
+</div>
+</section>
+<!-- Category Selection State: Technology -->
+<section class="max-w-article-max mx-auto w-full flex flex-col gap-stack-lg">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border border-outline-variant p-6 rounded-xl bg-surface-container-lowest">
+<div class="flex flex-col gap-2 max-w-md">
+<span class="font-label-caps text-label-caps text-on-surface-variant">CATEGORY</span>
+<h1 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-primary">Technology</h1>
+<p class="font-interface-md text-interface-md text-on-surface-variant">The latest in software, hardware, artificial intelligence, and the impact of tech on modern society.</p>
+</div>
+<button class="px-6 py-2 border border-primary text-primary font-interface-md text-interface-md rounded-lg hover:bg-surface-container-low transition-colors whitespace-nowrap w-fit">
+                        Follow
+                    </button>
+</div>
+<!-- Feed for Technology -->
+<div class="flex flex-col gap-stack-lg">
+<!-- Article Card 1 -->
+<article class="group flex flex-col sm:flex-row gap-6 border-b border-outline-variant pb-stack-lg">
+<div class="w-full sm:w-1/3 aspect-[4/3] rounded-lg overflow-hidden bg-surface-container relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A minimalist architectural photograph of a modern server farm interior, emphasizing clean lines, cool white lighting, and sleek dark metallic surfaces, high resolution editorial aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZPFeudeCOT2ti1ob1rVdnvGOyIiiQ55ko8HgDnOuIG4JRohpqvvaI-Q2bptm010waGN8734S1gBoWq5U6voKmLy6_JqOYkcFxtwtux6Ci4VWontBaizeqkLa-c7gkGuB-QiIx2Qjz9IUubO3njPnWycfTBGKdLiMcf1Yqc_ZB3ugbNnX1vRVdUq4qOeFt2QgeDzAp_jyP-Xct_tTOGah__NAp7Zx5fawyWXJIzuBhKrNIioBwJyXtfIHl8ChbTvw-mjZcjjG9agLy"/>
+</div>
+<div class="flex-1 flex flex-col gap-2 justify-center">
+<div class="flex items-center gap-2 mb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">ARTICLE</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-interface-sm text-interface-sm text-on-surface-variant">10 min read</span>
+</div>
+<h3 class="font-display-lg-mobile text-[24px] leading-[32px] text-primary group-hover:text-secondary transition-colors cursor-pointer">The Silent Rise of Ambient Computing</h3>
+<p class="font-interface-md text-interface-md text-on-surface-variant line-clamp-2">How invisible technology is subtly reshaping our daily routines without us even noticing the shift in paradigms.</p>
+<div class="flex items-center gap-3 mt-4">
+<div class="w-6 h-6 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A tiny portrait of a female writer looking thoughtful, soft natural light, minimalist background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSFN1qthCEJLXKSkWr3aG5XXwbNJj7-wk0tQD1mMv5mPR__zQ1S8dDOjrchY7PS2lCF7I8dal68ftAWvt6bULMyejdQlpoKrcQgEegL6iJPwyrMr0_hTN_gULfpWIatOyPdpScRT-0jE21uoC8rCqEYhfZ2y6rts0d7XECRzsd4ea3sJUcF_buGrnSwwpZBC4qAdPKRqK-U0HkgmlgGa4-gjrfrBOGQuGWNzuUOQQbXY2GpxM7eF4jjJ-m8yj7BU4KBvf5QHSFPCSM"/>
+</div>
+<span class="font-interface-sm text-interface-sm text-on-surface">Elena Rostova</span>
+</div>
+</div>
+</article>
+<!-- Post Card 1 (Bento style small) -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A portrait of a male tech analyst, sharp focus, clean bright aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyZHJJzo8eXQaQNo2oc8mOgN4hgLP3-HTxJEI-HabYBpxxBpwEaxX8lFH4bEB9KYoIP65Pj4CAeJt1Q-Di8uAQ3KUWWyxr1tohbPdWCr-T_E1Q10z7GDPOwxzpchRKwkFsfqlwJVGbB8iSH1nGpI_ETmBvyD52wX8lgMkkP1NtZ48-_xC-5xVBYEK80_mLnH9Nv0JE8lkYIq2arjzDebuEFjGsGVgAOp1FPLvmjuA5bhB7Iy8Syd3wt2F6xCANg7iRUvz-LPgDYnkt"/>
+</div>
+<div class="flex flex-col">
+<span class="font-interface-md text-interface-md font-medium text-primary">Marcus Vance</span>
+<span class="font-interface-sm text-interface-sm text-on-surface-variant">@mvance · 2h ago</span>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">more_horiz</span>
+</button>
+</div>
+<p class="font-article-body-mobile text-article-body-mobile text-on-surface">Just saw the new framework demo. The sheer reduction in boilerplate code is staggering. We might actually see a shift back to vanilla JS paradigms wrapped in syntactic sugar.</p>
+<div class="flex items-center gap-6 mt-2 pt-4 border-t border-outline-variant text-on-surface-variant font-interface-sm text-interface-sm">
+<button class="flex items-center gap-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'wght' 300;">chat_bubble</span> 24
+                            </button>
+<button class="flex items-center gap-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'wght' 300;">sync</span> 12
+                            </button>
+<button class="flex items-center gap-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'wght' 300;">favorite</span> 148
+                            </button>
+</div>
+</article>
+</div>
+</section>
+</div>
+<!-- Right Sidebar (Recent Discussions / Suggested) - Hidden on Mobile, Visible on Desktop -->
+<aside class="hidden xl:flex w-80 flex-col gap-stack-lg p-gutter border-l border-outline-variant bg-surface">
+<!-- Trending Topics -->
+<div class="flex flex-col gap-4">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant mb-2">TRENDING TOPICS</h4>
+<div class="flex flex-col gap-3">
+<a class="group" href="#">
+<div class="font-interface-sm text-interface-sm text-on-surface-variant mb-1">1 · Technology</div>
+<div class="font-interface-md text-interface-md font-medium text-primary group-hover:text-secondary transition-colors">Quantum Supremacy</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant mt-1">12.5K posts</div>
+</a>
+<a class="group" href="#">
+<div class="font-interface-sm text-interface-sm text-on-surface-variant mb-1">2 · Design</div>
+<div class="font-interface-md text-interface-md font-medium text-primary group-hover:text-secondary transition-colors">Neo-Brutalism</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant mt-1">8.2K posts</div>
+</a>
+</div>
+</div>
+<hr class="border-outline-variant"/>
+<!-- Suggested Creators -->
+<div class="flex flex-col gap-4">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant mb-2">SUGGESTED CREATORS</h4>
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A portrait of an abstract artist, high contrast black and white, editorial style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwRutQ54d4iZ8IexoVDexoOcXLj2T9sSapsKwrhDqQ67VF9S1SFmT1Ygoz_VbTgV8jQw8EcJpXem-7RILk0wxknXF0qEG-MdsqoGRnVS7mqP2HI0tz3LWS9_dy8_-CJcT5xytb9UIJ-5_8CmMvABtFgaWeu7vczLB1EP4o50ybuzi2WbSXrg4nDLovuYlOZ9rm65_gwphFSjT-JKMYqtBtRnfpGXaZkE09KfMFfs9AZk_H4YQquyN4uho6YGjuq66-xKwFUK285drt"/>
+</div>
+<div class="flex flex-col">
+<span class="font-interface-md text-interface-md font-medium text-primary truncate w-24">Sarah Chen</span>
+<span class="font-interface-sm text-interface-sm text-on-surface-variant">Design</span>
+</div>
+</div>
+<button class="px-3 py-1 border border-primary text-primary font-interface-sm text-interface-sm rounded hover:bg-surface-container-low transition-colors">
+                            Follow
+                        </button>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-stack-sm bg-surface/95 backdrop-blur-md pb-safe docked full-width bottom-0 rounded-t-xl shadow-sm border-t border-outline-variant dark:border-outline">
+<a class="flex flex-col items-center gap-1 text-on-surface-variant dark:text-on-tertiary-container active:bg-surface-variant scale-95 active:scale-90 transition-transform p-2 rounded-lg font-interface-sm-mobile text-interface-sm-mobile" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">home</span>
+            Home
+        </a>
+<a class="flex flex-col items-center gap-1 text-secondary dark:text-secondary-fixed-dim active:bg-surface-variant scale-95 active:scale-90 transition-transform p-2 rounded-lg font-interface-sm-mobile text-interface-sm-mobile" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1, 'wght' 400;">search</span>
+            Search
+        </a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant dark:text-on-tertiary-container active:bg-surface-variant scale-95 active:scale-90 transition-transform p-2 rounded-lg font-interface-sm-mobile text-interface-sm-mobile" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">chat_bubble</span>
+            Chat
+        </a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant dark:text-on-tertiary-container active:bg-surface-variant scale-95 active:scale-90 transition-transform p-2 rounded-lg font-interface-sm-mobile text-interface-sm-mobile" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">person</span>
+            Profile
+        </a>
+</nav>
+</body></html>

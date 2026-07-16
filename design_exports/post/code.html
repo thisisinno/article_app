@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Post Detail - Insight</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed": "#0f0069",
+                      "tertiary-container": "#151c27",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed": "#151c27",
+                      "surface-container-low": "#f3f4f5",
+                      "surface-container": "#edeeef",
+                      "on-secondary-container": "#fffbff",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "surface-variant": "#e1e3e4",
+                      "on-background": "#191c1d",
+                      "on-tertiary-container": "#7d8492",
+                      "tertiary-fixed-dim": "#c0c7d6",
+                      "surface": "#f8f9fa",
+                      "secondary-container": "#645efb",
+                      "surface-container-high": "#e7e8e9",
+                      "on-error-container": "#93000a",
+                      "outline": "#747878",
+                      "surface-bright": "#f8f9fa",
+                      "primary": "#000000",
+                      "on-secondary-fixed-variant": "#3323cc",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-primary": "#c8c6c5",
+                      "surface-container-highest": "#e1e3e4",
+                      "secondary": "#4b41e1",
+                      "outline-variant": "#c4c7c7",
+                      "primary-container": "#1c1b1b",
+                      "on-primary-container": "#858383",
+                      "on-surface": "#191c1d",
+                      "on-surface-variant": "#444748",
+                      "surface-dim": "#d9dadb",
+                      "on-tertiary-fixed-variant": "#404754",
+                      "on-tertiary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f2",
+                      "secondary-fixed-dim": "#c3c0ff",
+                      "on-error": "#ffffff",
+                      "surface-tint": "#5f5e5e",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#e5e2e1",
+                      "background": "#f8f9fa",
+                      "secondary-fixed": "#e2dfff",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed": "#dce2f3",
+                      "inverse-surface": "#2e3132",
+                      "on-primary-fixed-variant": "#474746",
+                      "on-secondary": "#ffffff",
+                      "on-primary-fixed": "#1c1b1b",
+                      "tertiary": "#000000"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "stack-md": "16px",
+                      "gutter": "24px",
+                      "stack-lg": "32px",
+                      "container-max": "1120px",
+                      "margin-mobile": "16px",
+                      "stack-xl": "64px",
+                      "article-max": "680px",
+                      "stack-sm": "8px"
+              },
+              "fontFamily": {
+                      "article-body": [
+                              "\"Source Serif 4\""
+                      ],
+                      "label-caps": [
+                              "Geist"
+                      ],
+                      "article-body-mobile": [
+                              "\"Source Serif 4\""
+                      ],
+                      "interface-sm": [
+                              "Geist"
+                      ],
+                      "interface-md": [
+                              "Geist"
+                      ],
+                      "display-lg-mobile": [
+                              "\"Source Serif 4\""
+                      ],
+                      "display-lg": [
+                              "\"Source Serif 4\""
+                      ]
+              },
+              "fontSize": {
+                      "article-body": [
+                              "20px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "article-body-mobile": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "interface-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "interface-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,700;1,8..60,400&display=swap');
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant hidden md:flex transition-all duration-200 ease-in-out">
+<div class="flex items-center gap-stack-lg">
+<span class="font-display-lg text-display-lg font-bold text-primary">Insight</span>
+<nav class="flex items-center gap-gutter">
+<a class="text-on-surface-variant font-interface-md text-interface-md hover:text-primary transition-colors py-4" href="#">Home</a>
+<a class="text-on-surface-variant font-interface-md text-interface-md hover:text-primary transition-colors py-4" href="#">Search</a>
+<a class="text-on-surface-variant font-interface-md text-interface-md hover:text-primary transition-colors py-4" href="#">Chat</a>
+</nav>
+</div>
+<div class="flex items-center gap-gutter">
+<div class="flex items-center gap-stack-sm">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container-low"><span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">notifications</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container-low"><span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">bookmark</span></button>
+</div>
+<button class="bg-primary text-on-primary font-interface-md text-interface-md px-4 py-2 rounded-lg hover:bg-inverse-surface transition-colors">Create Post</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small, professional portrait photograph of a young woman with dark hair, used as a user avatar. Minimalist aesthetic, soft lighting, light background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtqVi7y3fdMtC5MGbbqH8zJizGXWATL1-wE644l80jZZ8sjG7fjuCP61c6W215mlz2389VdnCbzx3u6_eOzKiq8nHrIfMNIYcRQ6JbATgnrT26rkpFXTvowxgkzqMs8BSEIr5AMPWxYcirlgewAJjOic9Y5KU2FPKJ38NaK6dbaoJObrMx6CvYGW8ft-30ThTzHf9tNDU7hl9AuM0Vzsr9CWMz3Q7pAz7bapYjbQUdZ29vNlO6epa6uPNMG0QsIVV_oPLUvTri8FQ7"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="pt-24 md:pt-24 pb-32 max-w-container-max mx-auto px-margin-mobile md:px-gutter grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left / Center Column: Post & Thread -->
+<div class="lg:col-span-8 space-y-stack-xl">
+<!-- Header/Back Action -->
+<div class="flex items-center gap-stack-md pb-stack-md border-b border-outline-variant">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300;">arrow_back</span>
+</button>
+<span class="font-interface-md text-interface-md text-on-surface">Post</span>
+</div>
+<!-- Article Content -->
+<article class="max-w-article-max mx-auto space-y-stack-md">
+<!-- Category Tag -->
+<div class="mb-stack-md">
+<span class="inline-block bg-surface-container-low text-on-surface-variant font-label-caps text-label-caps px-2 py-1 rounded">DESIGN ESSAYS</span>
+</div>
+<!-- Title -->
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-stack-md">The Quiet Power of Intentional Design</h1>
+<!-- Author Header -->
+<div class="flex items-center justify-between mb-stack-lg py-stack-md">
+<div class="flex items-center gap-stack-md">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A portrait of a male writer in his 40s, wearing glasses, thoughtful expression. Soft, natural studio lighting, minimalist light grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDs1vicVD6gkaLWzRA_YcHnr5eTOkV0Gt3evYYmbyBxA1hPt_aMhB71oxgYbkZcu5ivCmsECsiKIa6eXjxsg84hGbYeKo_1YhMNjLAM3pctDV83pjjohzD1wPGkn1jT_iOVh8xyn8-4GMHyWdJi-4cSyhyouXkFX6XG7FTvsmVN2Rl5sroTf3jW5G-DJRSch7bk2BE6BewzhQmKtqRyyiXf7oVYA0sKGdJkdxPQVaM1as3j91TArZGHSJHZ0z5WZNFb0aPEWwunwjNq"/>
+</div>
+<div>
+<div class="font-interface-md text-interface-md text-primary font-bold">Julian Sterling</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant">Design Director · @jsterl</div>
+</div>
+</div>
+<button class="border border-outline text-primary font-interface-sm text-interface-sm px-4 py-1.5 rounded-full hover:bg-surface-container-low transition-colors">Follow</button>
+</div>
+<!-- Article Body -->
+<div class="font-article-body-mobile md:font-article-body text-article-body-mobile md:text-article-body text-on-surface space-y-stack-md text-justify">
+<p>In an era defined by visual noise, the most profound statement a designer can make is often silence. We have reached a point of digital saturation where complexity is no longer a proxy for value, but rather an impediment to comprehension.</p>
+<p>Intentional design requires a relentless editorial eye. It is the practice of stripping away the ornamental until only the structural truth remains. This process is not merely aesthetic; it is fundamentally respectful of the user's cognitive load.</p>
+<!-- Inline Image -->
+<figure class="my-stack-lg">
+<div class="w-full h-64 md:h-96 rounded-lg overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A beautifully lit, minimalist architectural detail showing a pristine white staircase meeting a polished concrete floor. Deep shadows and sharp lines emphasize structural integrity over decoration. High key lighting, modern, austere aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxT4PbUoFTZV6AAJS1zQPDyHJL7r91Cvrdqww8caKfTFG1aCBTKjXeMFk4_2btFWIL2BiwIICdg9sS19Nrgzk6Lt9bSHJzUFiGCRPLTiUY3DPHydm4urDrWF21b3dr5TexEhH_y5TpW7k7V0HmQeYlkOh5PcQA6ysXIQUZhuF4hY4F1TkqzftmPlRGi4qUE1gXGT4hF8m1e1GKPqF4poUQ7wDwTGg9kv1h0SBGWC4hPr0UtW0tDrOZNSK9KyA11kvl7-Xo1jlfw_JM"/>
+</div>
+<figcaption class="mt-stack-sm font-interface-sm text-interface-sm text-on-surface-variant text-center">Structure preceding ornament.</figcaption>
+</figure>
+<p>Consider the interface as a physical space. When a room is cluttered, the mind cannot rest. When an interface is crowded with competing calls to action, extraneous borders, and gratuitous color, the user's intention is fractured.</p>
+<blockquote class="pl-stack-md border-l-2 border-primary my-stack-lg italic text-on-surface-variant">
+                        "The interface should recede. It is the frame, not the painting. When we design too loudly, we drown out the very content we were hired to elevate."
+                    </blockquote>
+<p>The pursuit of minimalism is often misunderstood as a lack of effort. In reality, achieving simplicity is an arduous negotiation. Every pixel must justify its existence. The result, when successful, is an environment that feels inevitable.</p>
+</div>
+<!-- Metadata Row -->
+<div class="mt-stack-lg pt-stack-md border-t border-outline-variant flex items-center gap-stack-md font-interface-sm text-interface-sm text-on-surface-variant">
+<span>Oct 24, 2023</span>
+<span>·</span>
+<span>10:42 AM</span>
+<span>·</span>
+<span>14.2K Views</span>
+</div>
+<!-- Engagement Summary -->
+<div class="py-stack-md border-y border-outline-variant mt-stack-md flex items-center justify-between text-on-surface-variant font-interface-sm text-interface-sm">
+<div class="flex items-center gap-stack-lg">
+<button class="flex items-center gap-1 hover:text-primary transition-colors group">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" style="font-variation-settings: 'wght' 300;">chat_bubble</span>
+<span>128</span>
+</button>
+<button class="flex items-center gap-1 hover:text-primary transition-colors group">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" style="font-variation-settings: 'wght' 300;">repeat</span>
+<span>45</span>
+</button>
+<button class="flex items-center gap-1 hover:text-secondary transition-colors group">
+<span class="material-symbols-outlined text-[20px] group-hover:text-secondary transition-colors" style="font-variation-settings: 'wght' 300;">favorite</span>
+<span>1.2K</span>
+</button>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'wght' 300;">bookmark</span>
+</button>
+<button class="hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'wght' 300;">share</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Thread / Replies Section -->
+<section class="max-w-article-max mx-auto mt-stack-lg">
+<!-- Reply Composer -->
+<div class="flex gap-stack-md mb-stack-lg">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="User avatar for the current logged in user. A small, modern illustration of a geometric face, minimalist, light background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcuKSufw8qVYxAI6WMQBNjZXiODlju7WcqKSOd6D3iZGA0DR_8NbMpBXXJ2Icu7yBUx0npAoq5HJG1fz7MJ225MDFWG6gUu8ltdAGYbHbgoPeOCk-o7M-ItL33urUwjJN6HTBMM8mhlHQVaBiaFVlM2ZIYYMiHXL5FwKkKizRjiPtht5Y0Dtc7vIFu70km9agtDfbAZdAXTuM5GKe278kfhu5QoGLlF0ex1e5odXtwpmmIxT8EVeCkqQnhkXVjxxk-2Yv_Bummgldc"/>
+</div>
+<div class="flex-grow flex flex-col gap-stack-sm">
+<textarea class="w-full bg-transparent border-b border-outline-variant focus:border-primary focus:ring-0 resize-none font-interface-md text-interface-md text-on-surface placeholder-on-surface-variant min-h-[60px] pb-2" placeholder="Add to the conversation..."></textarea>
+<div class="flex justify-end">
+<button class="bg-primary text-on-primary font-interface-sm text-interface-sm px-4 py-1.5 rounded-full hover:bg-inverse-surface transition-colors">Reply</button>
+</div>
+</div>
+</div>
+<!-- The Thread -->
+<div class="space-y-0">
+<!-- Top Level Reply -->
+<div class="relative flex gap-stack-md pt-stack-md">
+<!-- Vertical Connector Line -->
+<div class="absolute left-5 top-14 bottom-0 w-px bg-outline-variant"></div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant flex-shrink-0 relative z-10 bg-surface">
+<img class="w-full h-full object-cover" data-alt="Avatar of a female user, early 30s. Professional headshot, light mode aesthetic, soft focus background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqoYrBVBhZgK-hrJITE1S76Cow5Q6KCUUAEpd7peC1HbIOg2wqL7MxX713l0BF58ksQdtbGRgictrBj_lzyJKuCpdXmMNKNXmCnUibW-1BO2r0k67xoWoXmzJYGejUQvv25VtZck8OzaShG9lRH3P_iKMR1bVOjgCyCGrcujg6Da0Wl50oYSC4uerZOZr9vyiUgGigUbLMp9lEOTXLRQUDBxY1rApg-boCOAGzIcxfTZnYwNJvy4a5-O-ezoyhSegtIl6idpXD59N6"/>
+</div>
+<div class="flex-grow pb-stack-md">
+<div class="flex items-center gap-2 mb-1">
+<span class="font-interface-md text-interface-md text-primary font-bold">Elena Rostova</span>
+<span class="font-interface-sm text-interface-sm text-on-surface-variant">@elena_r · 2h</span>
+</div>
+<div class="font-interface-md text-interface-md text-on-surface mb-stack-sm">
+                                "The interface is the frame, not the painting." Beautifully put. I constantly struggle with clients wanting to add 'pop' when what they really need is structure. How do you navigate that conversation?
+                            </div>
+<div class="flex items-center gap-stack-md text-on-surface-variant font-interface-sm text-interface-sm">
+<button class="flex items-center gap-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[16px]">chat_bubble</span> 1</button>
+<button class="flex items-center gap-1 hover:text-secondary transition-colors"><span class="material-symbols-outlined text-[16px]">favorite</span> 24</button>
+</div>
+</div>
+</div>
+<!-- Nested Reply (Original Author) -->
+<div class="relative flex gap-stack-md pl-14">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant flex-shrink-0 relative z-10 bg-surface">
+<img class="w-full h-full object-cover" data-alt="A portrait of a male writer in his 40s, wearing glasses, thoughtful expression. Soft, natural studio lighting, minimalist light grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnipFBTU5sO9p4qYILRSmhqhEZG4Sl5wkcs8iTI0gJsBYTrN4s3mFfYC74E4TwgNlfKX7EAItQvvmLK8CAahdAK7i7t8RC2ZXN_7Jk43MLk0IOWwy8GkQKY2EmOEt-SjUmUhcn7eaVsqTE3xeSnEK_2fnGsXqKGq7ajE-zG9iZ6fIGsCTN-SXNJcjQARq9BEkAoCKm-pQYv2kG2jKAVITBvwZRNAJhBOq7UFKP9qi6ivP7XkQifDxG5C-s9Pe_qkN0XW6FNSidBRVM"/>
+</div>
+<div class="flex-grow pb-stack-md pt-stack-sm">
+<div class="flex items-center gap-2 mb-1">
+<span class="font-interface-md text-interface-md text-primary font-bold">Julian Sterling</span>
+<span class="bg-surface-container-low text-on-surface-variant text-[10px] uppercase font-bold px-1 rounded">Author</span>
+<span class="font-interface-sm text-interface-sm text-on-surface-variant">@jsterl · 1h</span>
+</div>
+<div class="font-interface-md text-interface-md text-on-surface mb-stack-sm">
+                                It's challenging. I usually try to reframe 'pop' as clarity. I show them a high-fidelity version of their crowded idea next to a structural one, and ask which one they can read faster. Utility usually wins out over decoration if presented objectively.
+                            </div>
+<div class="flex items-center gap-stack-md text-on-surface-variant font-interface-sm text-interface-sm">
+<button class="flex items-center gap-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[16px]">chat_bubble</span></button>
+<button class="flex items-center gap-1 hover:text-secondary transition-colors"><span class="material-symbols-outlined text-[16px]">favorite</span> 8</button>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full mt-stack-md py-4 text-center text-secondary font-interface-md text-interface-md hover:bg-surface-container-low rounded-lg transition-colors">
+                    Show more replies
+                </button>
+</section>
+</div>
+<!-- Right Sidebar (Related Content) -->
+<aside class="hidden lg:block lg:col-span-4 border-l border-outline-variant pl-gutter space-y-stack-xl">
+<!-- Author More Box -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md">
+<h3 class="font-interface-md text-interface-md text-primary font-bold mb-stack-md border-b border-outline-variant pb-2">More from Julian Sterling</h3>
+<div class="space-y-stack-md">
+<a class="block group" href="#">
+<h4 class="font-interface-md text-interface-md text-on-surface group-hover:text-primary transition-colors leading-snug mb-1">Typography as Architecture: Building Grid Systems that Scale</h4>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant">Oct 12 · 8 min read</div>
+</a>
+<a class="block group" href="#">
+<h4 class="font-interface-md text-interface-md text-on-surface group-hover:text-primary transition-colors leading-snug mb-1">The End of the Endless Scroll</h4>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant">Sep 28 · 5 min read</div>
+</a>
+</div>
+</div>
+<!-- Similar Discussions -->
+<div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-stack-md uppercase tracking-wider">Similar Discussions</h3>
+<div class="space-y-stack-md">
+<a class="flex gap-stack-md group" href="#">
+<div class="flex-grow">
+<h4 class="font-interface-md text-interface-md text-on-surface group-hover:text-primary transition-colors leading-snug mb-1">Minimalism vs. Brutalism in Modern Interfaces</h4>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant">in UI Trends · 42 replies</div>
+</div>
+</a>
+<a class="flex gap-stack-md group" href="#">
+<div class="flex-grow">
+<h4 class="font-interface-md text-interface-md text-on-surface group-hover:text-primary transition-colors leading-snug mb-1">Cognitive Load and Checkout Flows</h4>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant">in UX Research · 18 replies</div>
+</div>
+</a>
+</div>
+</div>
+<footer class="pt-stack-lg flex flex-wrap gap-x-4 gap-y-2 font-interface-sm text-interface-sm text-on-surface-variant">
+<a class="hover:text-primary" href="#">Terms</a>
+<a class="hover:text-primary" href="#">Privacy</a>
+<a class="hover:text-primary" href="#">Guidelines</a>
+<span>© 2023 Insight</span>
+</footer>
+</aside>
+</main>
+<!-- Mobile Bottom Navigation (Hidden on Web) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-stack-sm bg-surface/95 backdrop-blur-md pb-safe border-t border-outline-variant rounded-t-xl shadow-sm transition-transform scale-95 active:scale-90">
+<a class="text-on-surface-variant flex flex-col items-center gap-1 hover:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Home</span>
+</a>
+<a class="text-on-surface-variant flex flex-col items-center gap-1 hover:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Search</span>
+</a>
+<a class="text-on-surface-variant flex flex-col items-center gap-1 hover:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Chat</span>
+</a>
+<a class="text-on-surface-variant flex flex-col items-center gap-1 hover:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Profile</span>
+</a>
+</nav>
+</body></html>

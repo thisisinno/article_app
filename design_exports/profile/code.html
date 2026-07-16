@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Insight - User Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed": "#0f0069",
+                      "tertiary-container": "#151c27",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed": "#151c27",
+                      "surface-container-low": "#f3f4f5",
+                      "surface-container": "#edeeef",
+                      "on-secondary-container": "#fffbff",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "surface-variant": "#e1e3e4",
+                      "on-background": "#191c1d",
+                      "on-tertiary-container": "#7d8492",
+                      "tertiary-fixed-dim": "#c0c7d6",
+                      "surface": "#f8f9fa",
+                      "secondary-container": "#645efb",
+                      "surface-container-high": "#e7e8e9",
+                      "on-error-container": "#93000a",
+                      "outline": "#747878",
+                      "surface-bright": "#f8f9fa",
+                      "primary": "#000000",
+                      "on-secondary-fixed-variant": "#3323cc",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-primary": "#c8c6c5",
+                      "surface-container-highest": "#e1e3e4",
+                      "secondary": "#4b41e1",
+                      "outline-variant": "#c4c7c7",
+                      "primary-container": "#1c1b1b",
+                      "on-primary-container": "#858383",
+                      "on-surface": "#191c1d",
+                      "on-surface-variant": "#444748",
+                      "surface-dim": "#d9dadb",
+                      "on-tertiary-fixed-variant": "#404754",
+                      "on-tertiary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f2",
+                      "secondary-fixed-dim": "#c3c0ff",
+                      "on-error": "#ffffff",
+                      "surface-tint": "#5f5e5e",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#e5e2e1",
+                      "background": "#f8f9fa",
+                      "secondary-fixed": "#e2dfff",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed": "#dce2f3",
+                      "inverse-surface": "#2e3132",
+                      "on-primary-fixed-variant": "#474746",
+                      "on-secondary": "#ffffff",
+                      "on-primary-fixed": "#1c1b1b",
+                      "tertiary": "#000000"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "stack-md": "16px",
+                      "gutter": "24px",
+                      "stack-lg": "32px",
+                      "container-max": "1120px",
+                      "margin-mobile": "16px",
+                      "stack-xl": "64px",
+                      "article-max": "680px",
+                      "stack-sm": "8px"
+              },
+              "fontFamily": {
+                      "article-body": [
+                              "\"Source Serif 4\""
+                      ],
+                      "label-caps": [
+                              "Geist"
+                      ],
+                      "article-body-mobile": [
+                              "\"Source Serif 4\""
+                      ],
+                      "interface-sm": [
+                              "Geist"
+                      ],
+                      "interface-md": [
+                              "Geist"
+                      ],
+                      "display-lg-mobile": [
+                              "\"Source Serif 4\""
+                      ],
+                      "display-lg": [
+                              "\"Source Serif 4\""
+                      ]
+              },
+              "fontSize": {
+                      "article-body": [
+                              "20px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "article-body-mobile": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "interface-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "interface-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col md:flex-row font-interface-md text-interface-md">
+<!-- Top Navigation (Mobile/Tablet) -->
+<nav class="md:hidden fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant transition-all duration-200 ease-in-out">
+<div class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary">Insight</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">bookmark</span></button>
+<button class="bg-primary text-on-primary px-4 py-2 rounded font-interface-sm text-interface-sm">Create Post</button>
+</div>
+</nav>
+<!-- Side Navigation (Desktop) -->
+<aside class="hidden md:flex flex-col fixed left-0 top-0 h-full p-gutter gap-stack-md bg-surface text-primary border-r border-outline-variant docked left-0 h-full w-64 z-50">
+<div class="font-display-lg text-display-lg font-bold text-primary mb-stack-lg">Insight</div>
+<div class="text-on-surface-variant font-interface-sm text-interface-sm -mt-6 mb-4">Editorial Social</div>
+<nav class="flex-1 flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-interface-md text-interface-md" href="#">
+<span class="material-symbols-outlined">home</span>
+                Home
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-interface-md text-interface-md" href="#">
+<span class="material-symbols-outlined">search</span>
+                Search
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-interface-md text-interface-md" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+                Chat
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-interface-md text-interface-md" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+                Bookmarks
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold bg-surface-container transition-transform translate-x-1 font-interface-md text-interface-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+                Profile
+            </a>
+<button class="mt-4 bg-primary text-on-primary py-3 rounded-lg w-full font-interface-md text-interface-md hover:opacity-90 transition-opacity">
+                Create Post
+            </button>
+</nav>
+<div class="mt-auto flex flex-col gap-2 pt-4 border-t border-outline-variant">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-primary transition-colors font-interface-sm text-interface-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-primary transition-colors font-interface-sm text-interface-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>
+                Help
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 w-full md:pl-64 pt-16 md:pt-0 pb-20 md:pb-0 flex justify-center bg-surface-bright min-h-screen">
+<div class="w-full max-w-container-max flex xl:gap-gutter px-0 md:px-margin-mobile xl:px-gutter mx-auto relative">
+<!-- Central Column (Profile & Feed) -->
+<div class="w-full xl:w-[680px] flex-shrink-0 mx-auto bg-surface-container-lowest min-h-screen border-x border-outline-variant/30">
+<!-- Profile Header -->
+<div class="relative">
+<!-- Cover Image -->
+<div class="h-48 w-full bg-surface-container-high relative overflow-hidden" data-alt="A subtle, minimalist abstract architectural photograph in light greys and soft whites, featuring clean lines and gentle shadows, conveying a sense of calm and professional editorial focus." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBufWYJ9iVI-Cgyl6B9tjEvn-UeBJakwBj0IxP4PC191SkEEuY956-1mxuVJZlHpgvtbEXBmoNaasKxADgY6NYQJiN9mm0kd0brwSHGtEvPUrMRaIJWvO4z52ZHFRRAnVn9RGyBlvcHddL1ZjgnCocjgj06I9tIor5jqSVTiWI556MaWWs8WPnx4grv1gHmhdeqX98-IWJXXkkjJ3W7HlFo1oJK6aw6VdqnMjLu4iyeMX2L3bPKMGTC8TS1rsmj0S7h0MJBRKiUgeDq')">
+<!-- Abstract overlay for editorial feel -->
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-surface-container-lowest/50"></div>
+</div>
+<!-- Profile Info -->
+<div class="px-gutter pb-stack-lg relative">
+<!-- Avatar & Actions Row -->
+<div class="flex justify-between items-end -mt-16 mb-4 relative z-10">
+<div class="w-32 h-32 rounded-full border-4 border-surface-container-lowest overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A professional, editorial-style black and white portrait of a person looking slightly off-camera, well-lit with soft natural light, against a clean light background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAscNJ5FHf86HW6ZmzIURh77Eynj2IgkIwGzHfnv6LVmuluCso3Cu1jU0h3P_f29cmVWcsbX5bpRBHSYwo4B2TKo95jtoFtvpqD2MXgYmy3fsWdVoeOsHW1K97b48kmVn4GQSGHJhnxou9lEQ1g3Ry6dTOtl1ZSIOIcnviu0_LPPwH04pV79DSmTdiLcS3GN4czcmR-IP9Rd7nZ09kHz5PclP0t1BT5SbYPUf-HrrRmkd1RAgPc2lVM6mLwLfib9YXyite1Hhzq5D4O"/>
+</div>
+<div class="flex gap-2">
+<button class="px-5 py-2 rounded-full border border-outline font-interface-md text-interface-md hover:bg-surface-container-low transition-colors text-primary">Edit Profile</button>
+</div>
+</div>
+<!-- Name & Bio -->
+<div class="mb-4">
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary m-0">Eleanor Vance</h1>
+<p class="text-on-surface-variant font-interface-md text-interface-md">@eleanor_v</p>
+</div>
+<div class="mb-4 text-on-surface font-article-body-mobile md:font-article-body text-article-body-mobile md:text-article-body leading-relaxed max-w-prose">
+                            Editorial designer and writer exploring the intersection of tech and culture. Seeking clarity in complex systems.
+                        </div>
+<!-- Meta Info -->
+<div class="flex flex-wrap gap-4 text-on-surface-variant font-interface-sm text-interface-sm mb-6">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">link</span> <a class="text-secondary hover:underline" href="#">eleanorvance.com</a></span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">calendar_month</span> Joined April 2021</span>
+</div>
+<!-- Stats -->
+<div class="flex gap-6 font-interface-md text-interface-md">
+<a class="hover:underline" href="#"><strong class="text-primary">1.2k</strong> <span class="text-on-surface-variant">Following</span></a>
+<a class="hover:underline" href="#"><strong class="text-primary">8.4k</strong> <span class="text-on-surface-variant">Followers</span></a>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<div class="border-b border-outline-variant px-gutter flex gap-6 overflow-x-auto no-scrollbar">
+<a class="py-3 font-interface-md text-interface-md font-bold text-primary border-b-2 border-primary whitespace-nowrap" href="#">Posts</a>
+<a class="py-3 font-interface-md text-interface-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Replies</a>
+<a class="py-3 font-interface-md text-interface-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Articles</a>
+<a class="py-3 font-interface-md text-interface-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Media</a>
+<a class="py-3 font-interface-md text-interface-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Likes</a>
+</div>
+<!-- Feed Content -->
+<div class="flex flex-col divide-y divide-outline-variant/50">
+<!-- Pinned Post -->
+<article class="p-gutter hover:bg-surface-container-low/50 transition-colors cursor-pointer group">
+<div class="flex items-center gap-2 text-on-surface-variant font-interface-sm text-interface-sm mb-2">
+<span class="material-symbols-outlined text-[16px]">push_pin</span> Pinned
+                        </div>
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A professional, editorial-style black and white portrait of a person looking slightly off-camera, well-lit with soft natural light, against a clean light background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAV7ApOx6GD5CUUaXECDUudMJlS4x2e8KNF6lNBVccYcBHsG31Pe1UvlYSgecEzXi2c7idXZym3_L7iAhwoRXjzacPRVOUmv5A6V7_wUyCH1iAV2xZj4PyYjKzbyZmU8GEEn-7kZwYNeafKan1stBVhgOKNGwJ7zRq_ZVWJ14iadS9P9nuqoMDYuuBkWXYT52tdkdEdBg7dLzNcf6G4KPKA2QxMq4VA6s7oQJfKTLJVccbxsh-Q2wruBvvdgNh2czyCW6gIpBeiP3W7"/>
+</div>
+<div class="flex-1">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-interface-md text-interface-md font-bold text-primary">Eleanor Vance</span>
+<span class="font-interface-sm text-interface-sm text-on-surface-variant">@eleanor_v · Oct 12</span>
+</div>
+<!-- Article Preview Card embedded in post -->
+<div class="mt-3 border border-outline-variant rounded-lg overflow-hidden bg-surface-container-lowest group-hover:border-outline transition-colors">
+<div class="h-48 w-full bg-surface-container" data-alt="A minimalist overhead shot of a clean desk with a notebook, a sophisticated fountain pen, and a cup of black coffee, bathed in soft, diffused morning light, conveying a focused writing session." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBXdtHWsJbINsdDLs2ys-0-kI6Q8_Aco4ucxQrR1Vxx3K9I8ueNxsN7eiF3jo3sKk7d6O9X8fV2kFygGOw3y1Nc7ktQtwmqVf6XQxEC9Aze4GEuFwWsEFKD6bMdwYfP0IJnfOmjN0Xy12VbHGPrX2DGIOATvigH784ZkDsCfywjw_ynKpAVcF_N9VtkjYQsGS-Ns46e_vyVDLh25KcTBuJtLVBEsqoaWlO0imuASkBYc4bKh-ZPXrIh1kgMarXTE6is1hrNdoc_f2oK')"></div>
+<div class="p-4">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-2">Design Theory</div>
+<h3 class="font-article-body-mobile md:font-article-body text-article-body-mobile md:text-article-body text-primary mb-2 line-clamp-2">The Architecture of Silence: Designing for Focus in a Noisy Web</h3>
+<p class="font-interface-sm text-interface-sm text-on-surface-variant line-clamp-2">An exploration of structural minimalism and why omitting interface elements is often the most powerful design decision we can make.</p>
+</div>
+</div>
+<div class="flex justify-between items-center mt-4 text-on-surface-variant w-3/4">
+<button class="flex items-center gap-1 hover:text-secondary transition-colors font-interface-sm text-interface-sm"><span class="material-symbols-outlined text-[18px]">chat_bubble</span> 42</button>
+<button class="flex items-center gap-1 hover:text-green-600 transition-colors font-interface-sm text-interface-sm"><span class="material-symbols-outlined text-[18px]">repeat</span> 128</button>
+<button class="flex items-center gap-1 hover:text-red-500 transition-colors font-interface-sm text-interface-sm"><span class="material-symbols-outlined text-[18px]">favorite</span> 843</button>
+<button class="flex items-center gap-1 hover:text-primary transition-colors font-interface-sm text-interface-sm"><span class="material-symbols-outlined text-[18px]">ios_share</span></button>
+</div>
+</div>
+</div>
+</article>
+<!-- Standard Short Post -->
+<article class="p-gutter hover:bg-surface-container-low/50 transition-colors cursor-pointer group">
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A professional, editorial-style black and white portrait of a person looking slightly off-camera, well-lit with soft natural light, against a clean light background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCVIPFhGAbZTbkyEWDni-rqgm9p4o0DR5rl6UShvLwr410Ki2-DOEKePH-PYGuwrKlGXWgYAB1xfw-KkSS7oZSbYrucAi70IsSKawBppmSj3eSJ-gn6caU5MmQxQpos-0vKPePuoF6QTMvRVSeai7CE5Fdulf2Tj_qQZOzk5eVdAr9rCmnulbpecR_Oxh9Ygjg9Des2WCHYgqj_pacFNxiAMa0YRTzHUmbsf_DAAshj5WROA3E4kxDMYj24POa5XWku6DZc-ksJyR8"/>
+</div>
+<div class="flex-1">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-interface-md text-interface-md font-bold text-primary">Eleanor Vance</span>
+<span class="font-interface-sm text-interface-sm text-on-surface-variant">@eleanor_v · 3h</span>
+</div>
+<div class="font-interface-md text-interface-md text-on-surface mb-3 leading-relaxed">
+                                    Typography isn't just about reading words; it's about feeling them. The choice between a stark sans-serif and a warm serif changes the emotional resonance of the entire argument before the reader even comprehends the first sentence.
+                                </div>
+<div class="flex justify-between items-center mt-2 text-on-surface-variant w-3/4">
+<button class="flex items-center gap-1 hover:text-secondary transition-colors font-interface-sm text-interface-sm"><span class="material-symbols-outlined text-[18px]">chat_bubble</span> 12</button>
+<button class="flex items-center gap-1 hover:text-green-600 transition-colors font-interface-sm text-interface-sm"><span class="material-symbols-outlined text-[18px]">repeat</span> 4</button>
+<button class="flex items-center gap-1 hover:text-red-500 transition-colors font-interface-sm text-interface-sm"><span class="material-symbols-outlined text-[18px]">favorite</span> 95</button>
+<button class="flex items-center gap-1 hover:text-primary transition-colors font-interface-sm text-interface-sm"><span class="material-symbols-outlined text-[18px]">ios_share</span></button>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+<!-- Right Sidebar (Contextual) -->
+<aside class="hidden xl:block w-[320px] flex-shrink-0 py-gutter sticky top-0 h-screen overflow-y-auto no-scrollbar">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-stack-md">
+<h2 class="font-interface-md text-interface-md font-bold text-primary mb-4">Recommended Discussions</h2>
+<div class="flex flex-col gap-4">
+<a class="group block" href="#">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Typography</div>
+<div class="font-interface-md text-interface-md text-primary group-hover:underline line-clamp-2">The resurgence of brutalist typography in modern web applications.</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant mt-1">1.2k discussing</div>
+</a>
+<a class="group block" href="#">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Design Systems</div>
+<div class="font-interface-md text-interface-md text-primary group-hover:underline line-clamp-2">Beyond components: Building shared semantic understanding.</div>
+<div class="font-interface-sm text-interface-sm text-on-surface-variant mt-1">843 discussing</div>
+</a>
+</div>
+</div>
+<div class="text-on-surface-variant font-interface-sm text-interface-sm flex flex-wrap gap-x-3 gap-y-1 px-2">
+<a class="hover:underline" href="#">Terms</a>
+<a class="hover:underline" href="#">Privacy</a>
+<a class="hover:underline" href="#">Cookies</a>
+<a class="hover:underline" href="#">About</a>
+<span>© 2024 Insight</span>
+</div>
+</aside>
+</div>
+</main>
+<!-- Bottom Navigation (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-stack-sm bg-surface/95 backdrop-blur-md pb-safe border-t border-outline-variant shadow-sm rounded-t-xl scale-95 transition-transform">
+<a class="text-on-surface-variant flex flex-col items-center gap-1 active:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Home</span>
+</a>
+<a class="text-on-surface-variant flex flex-col items-center gap-1 active:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Search</span>
+</a>
+<a class="text-on-surface-variant flex flex-col items-center gap-1 active:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Chat</span>
+</a>
+<a class="text-secondary flex flex-col items-center gap-1 active:bg-surface-variant p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-interface-sm-mobile text-interface-sm-mobile">Profile</span>
+</a>
+</nav>
+</body></html>
