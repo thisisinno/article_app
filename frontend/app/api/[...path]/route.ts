@@ -29,9 +29,10 @@ async function proxy(request: NextRequest) {
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15_000);
+  const multipart=(request.headers.get("Content-Type")||"").toLowerCase().startsWith("multipart/form-data");
+  const hasBody = !["GET", "HEAD"].includes(request.method);
+  const timeout = setTimeout(() => controller.abort(), multipart?120_000:hasBody?30_000:15_000);
   try {
-    const hasBody = !["GET", "HEAD"].includes(request.method);
     const init: RequestInit & {duplex?: "half"} = {
       method: request.method,
       headers,
@@ -70,7 +71,7 @@ async function proxy(request: NextRequest) {
     return new Response(upstream.body, {status: upstream.status, headers: responseHeaders});
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      return jsonError(504, "backend_timeout", "The application server took too long to respond. Please retry.", request.headers.get("X-Request-ID"));
+      return jsonError(504, multipart?"upload_timeout":"backend_timeout", multipart?"The upload took too long. Check your connection and retry.":"The application server took too long to respond. Please retry.", request.headers.get("X-Request-ID"));
     }
     return jsonError(502, "backend_unreachable", "The application server could not be reached. Please retry.", request.headers.get("X-Request-ID"));
   } finally {

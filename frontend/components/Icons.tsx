@@ -7,6 +7,7 @@ export const BellIcon=(p:Props)=><Icon {...p}><path d="M18 8a6 6 0 0 0-12 0c0 7-
 export const ProfileIcon=(p:Props)=><Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></Icon>;
 export const ComposeIcon=(p:Props)=><Icon {...p}><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/></Icon>;
 export const CommentIcon=(p:Props)=><Icon {...p}><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></Icon>;
+export const QuoteIcon=(p:Props)=><Icon {...p}><path d="M7 17H4a2 2 0 0 1-2-2v-3a6 6 0 0 1 6-6h1v4H8a2 2 0 0 0-2 2v1h1Zm12 0h-3a2 2 0 0 1-2-2v-3a6 6 0 0 1 6-6h1v4h-1a2 2 0 0 0-2 2v1h1Z"/></Icon>;
 export const LikeIcon=(p:Props)=><Icon {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></Icon>;
 export const BookmarkIcon=(p:Props)=><Icon {...p}><path d="M6 3h12v18l-6-4-6 4z"/></Icon>;
 export const ViewIcon=(p:Props)=><Icon {...p}><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></Icon>;

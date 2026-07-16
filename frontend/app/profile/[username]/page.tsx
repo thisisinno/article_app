@@ -1,4 +1,288 @@
-"use client";import{use,useCallback,useEffect,useState}from"react";import{useRouter,useSearchParams}from"next/navigation";import{api}from"@/lib/api";import type{User}from"@/lib/types";import{Feed}from"@/components/Feed";import{useApp}from"@/components/AppProvider";import{Avatar}from"@/components/Avatar";import{CloseIcon,LogoutIcon}from"@/components/Icons";import{ProfileSkeleton}from"@/components/skeletons/Skeletons";import styles from"./profile.module.css";
-type Profile=User&{bio:string;website:string;location:string;cover_image:string|null;joined_at:string;is_me:boolean};
-export default function ProfilePage({params}:{params:Promise<{username:string}>}){const requested=use(params).username,{user,authStatus,openAuth,refresh,logout,toast}=useApp(),username=requested==="me"?user?.username||"":requested,[profile,setProfile]=useState<Profile|null>(null),[error,setError]=useState(""),[edit,setEdit]=useState(false),[version,setVersion]=useState(0),sp=useSearchParams(),router=useRouter();const load=useCallback(()=>{if(!username)return;const c=new AbortController();api<Profile>(`/profiles/${username}/`,{signal:c.signal}).then(setProfile).catch(x=>setError(x instanceof Error?x.message:"Unable to load profile."));return c},[username]);useEffect(()=>{const c=load();return()=>c?.abort()},[load,version]);useEffect(()=>{if(sp.get("edit")==="1"&&profile?.is_me)setEdit(true)},[sp,profile]);if(requested==="me"&&authStatus==="loading")return <div className="content"><ProfileSkeleton/></div>;if(requested==="me"&&!user)return <div className="empty"><h2>Sign in to view your profile</h2><button className="primary" onClick={openAuth}>Sign in</button></div>;if(error&&!profile)return <div className="error"><p>{error}</p><button className="secondary" onClick={()=>setVersion(x=>x+1)}>Retry</button></div>;if(!profile)return <div className="content"><ProfileSkeleton/></div>;const allowed=profile.can_publish?["posts","articles","replies","likes",...(profile.is_me?["bookmarks"]:[])]:["replies","likes",...(profile.is_me?["bookmarks"]:[])],tab=allowed.includes(sp.get("tab")||"")?sp.get("tab")!:allowed[0];async function saved(){setEdit(false);await refresh();const c=load();c?.abort();setVersion(x=>x+1);toast("Profile updated")};return <div className="content"><section className={styles.hero}>{profile.cover_image?<img className={styles.cover} src={profile.cover_image} alt=""/>:<div className={styles.cover}/>}<div className={styles.avatar}><Avatar user={profile} size={92}/></div>{profile.is_me&&<div className={styles.actions}><button className="secondary" onClick={()=>setEdit(true)}>Edit Profile</button><button className="iconButton" onClick={()=>void logout()} aria-label="Logout"><LogoutIcon/></button></div>}<h1>{profile.display_name}{profile.verified&&<span> ✓</span>}</h1><span>@{profile.username}</span>{profile.bio&&<p>{profile.bio}</p>}<div className={styles.meta}>{profile.location&&<span>{profile.location}</span>}{profile.website&&<a href={profile.website} target="_blank">{profile.website}</a>}<span>Joined {new Date(profile.joined_at).toLocaleDateString(undefined,{month:"long",year:"numeric"})}</span></div></section><div className="tabs">{allowed.map(x=><button className={`tab ${tab===x?"active":""}`} onClick={()=>router.push(`?tab=${x}`)} key={x}>{x[0].toUpperCase()+x.slice(1)}</button>)}</div><Feed path={`/profiles/${profile.username}/posts/?tab=${tab}`}/>{edit&&<ProfileEditor profile={profile} close={()=>setEdit(false)} saved={saved}/>}</div>}
-function ProfileEditor({profile,close,saved}:{profile:Profile;close:()=>void;saved:()=>Promise<void>}){const[busy,setBusy]=useState(false),[error,setError]=useState(""),[avatar,setAvatar]=useState<File|null>(null),[cover,setCover]=useState<File|null>(null);async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setError("");const form=new FormData(e.currentTarget);if(avatar)form.set("avatar",avatar);if(cover)form.set("cover_image",cover);try{await api("/profiles/me/",{method:"PATCH",body:form});await saved()}catch(x){setError(x instanceof Error?x.message:"Unable to save profile.")}finally{setBusy(false)}}return <div className="overlay profileEditor"><dialog open><header><button className="iconButton" onClick={close} aria-label="Close"><CloseIcon/></button><h2>Edit profile</h2></header><form onSubmit={submit}><label>Display name<input name="display_name" defaultValue={profile.display_name} required maxLength={80}/></label><label>Bio<textarea name="bio" defaultValue={profile.bio} maxLength={300} rows={4}/></label><label>Website<input name="website" type="url" defaultValue={profile.website}/></label><label>Location<input name="location" defaultValue={profile.location} maxLength={100}/></label><label>Avatar<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e=>setAvatar(e.target.files?.[0]||null)}/></label>{avatar&&<img className="uploadPreview round" src={URL.createObjectURL(avatar)} alt="Avatar preview"/>}<label><input type="checkbox" name="remove_avatar" value="true"/> Remove avatar</label><label>Cover image<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e=>setCover(e.target.files?.[0]||null)}/></label>{cover&&<img className="uploadPreview" src={URL.createObjectURL(cover)} alt="Cover preview"/>}<label><input type="checkbox" name="remove_cover_image" value="true"/> Remove cover</label>{error&&<p className="formError">{error}</p>}<div className="dialogActions"><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={busy}>{busy?"Saving…":"Save"}</button></div></form></dialog></div>}
+"use client";
+import { use, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { api } from "@/lib/api";
+import type { User } from "@/lib/types";
+import { Feed } from "@/components/Feed";
+import { useApp } from "@/components/AppProvider";
+import { Avatar } from "@/components/Avatar";
+import { CloseIcon, LogoutIcon } from "@/components/Icons";
+import { ProfileSkeleton } from "@/components/skeletons/Skeletons";
+import styles from "./profile.module.css";
+type Profile = User & {
+  bio: string;
+  website: string;
+  location: string;
+  cover_image: string | null;
+  joined_at: string;
+  is_me: boolean;
+};
+export default function ProfilePage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const requested = use(params).username,
+    { user, authStatus, openAuth, refresh, logout, toast } = useApp(),
+    username = requested === "me" ? user?.username || "" : requested,
+    [profile, setProfile] = useState<Profile | null>(null),
+    [error, setError] = useState(""),
+    [edit, setEdit] = useState(false),
+    [version, setVersion] = useState(0),
+    sp = useSearchParams(),
+    router = useRouter();
+  const load = useCallback(() => {
+    if (!username) return;
+    const c = new AbortController();
+    api<Profile>(`/profiles/${username}/`, { signal: c.signal })
+      .then(setProfile)
+      .catch((x) =>
+        setError(x instanceof Error ? x.message : "Unable to load profile."),
+      );
+    return c;
+  }, [username]);
+  useEffect(() => {
+    const c = load();
+    return () => c?.abort();
+  }, [load, version]);
+  useEffect(() => {
+    if (sp.get("edit") === "1" && profile?.is_me) setEdit(true);
+  }, [sp, profile]);
+  if (requested === "me" && authStatus === "loading")
+    return (
+      <div className="content">
+        <ProfileSkeleton />
+      </div>
+    );
+  if (requested === "me" && !user)
+    return (
+      <div className="empty">
+        <h2>Sign in to view your profile</h2>
+        <button className="primary" onClick={openAuth}>
+          Sign in
+        </button>
+      </div>
+    );
+  if (error && !profile)
+    return (
+      <div className="error">
+        <p>{error}</p>
+        <button className="secondary" onClick={() => setVersion((x) => x + 1)}>
+          Retry
+        </button>
+      </div>
+    );
+  if (!profile)
+    return (
+      <div className="content">
+        <ProfileSkeleton />
+      </div>
+    );
+  const allowed = profile.can_publish
+      ? [
+          "posts",
+          "articles","quotes",
+          "replies",
+          "likes",
+          ...(profile.is_me ? ["bookmarks"] : []),
+        ]
+      : ["quotes","replies", "likes", ...(profile.is_me ? ["bookmarks"] : [])],
+    tab = allowed.includes(sp.get("tab") || "") ? sp.get("tab")! : allowed[0];
+  async function saved() {
+    setEdit(false);
+    await refresh();
+    const c = load();
+    c?.abort();
+    setVersion((x) => x + 1);
+    toast("Profile updated");
+  }
+  return (
+    <div className="content">
+      <section className={styles.hero}>
+        {profile.cover_image ? (
+          <img className={styles.cover} src={profile.cover_image} alt="" />
+        ) : (
+          <div className={styles.cover} />
+        )}
+        <div className={styles.avatar}>
+          <Avatar user={profile} size={92} />
+        </div>
+        {profile.is_me && (
+          <div className={styles.actions}>
+            <button className="secondary" onClick={() => setEdit(true)}>
+              Edit Profile
+            </button>
+            <button
+              className="iconButton"
+              onClick={() => void logout()}
+              aria-label="Logout"
+            >
+              <LogoutIcon />
+            </button>
+          </div>
+        )}
+        <h1>
+          {profile.display_name}
+          {profile.verified && <span> ✓</span>}
+        </h1>
+        <span>@{profile.username}</span>
+        {profile.bio && <p>{profile.bio}</p>}
+        <div className={styles.meta}>
+          {profile.location && <span>{profile.location}</span>}
+          {profile.website && (
+            <a href={profile.website} target="_blank">
+              {profile.website}
+            </a>
+          )}
+          <span>
+            Joined{" "}
+            {new Intl.DateTimeFormat("en",{timeZone:"UTC",
+              month: "long",
+              year: "numeric",
+            }).format(new Date(profile.joined_at))}
+          </span>
+        </div>
+      </section>
+      <div className="tabs">
+        {allowed.map((x) => (
+          <button
+            className={`tab ${tab === x ? "active" : ""}`}
+            onClick={() => router.push(`?tab=${x}`)}
+            key={x}
+          >
+            {x[0].toUpperCase() + x.slice(1)}
+          </button>
+        ))}
+      </div>
+      <Feed path={`/profiles/${profile.username}/posts/?tab=${tab}`} />
+      {edit && (
+        <ProfileEditor
+          profile={profile}
+          close={() => setEdit(false)}
+          saved={saved}
+        />
+      )}
+    </div>
+  );
+}
+function ProfileEditor({
+  profile,
+  close,
+  saved,
+}: {
+  profile: Profile;
+  close: () => void;
+  saved: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [avatar, setAvatar] = useState<File | null>(null),
+    [cover, setCover] = useState<File | null>(null);
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    const form = new FormData(e.currentTarget);
+    if (avatar) form.set("avatar", avatar);
+    if (cover) form.set("cover_image", cover);
+    try {
+      await api("/profiles/me/", { method: "PATCH", body: form });
+      await saved();
+    } catch (x) {
+      setError(x instanceof Error ? x.message : "Unable to save profile.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="overlay profileEditor">
+      <dialog open>
+        <header>
+          <button className="iconButton" onClick={close} aria-label="Close">
+            <CloseIcon />
+          </button>
+          <h2>Edit profile</h2>
+        </header>
+        <form onSubmit={submit}>
+          <label>
+            Display name
+            <input
+              name="display_name"
+              defaultValue={profile.display_name}
+              required
+              maxLength={80}
+            />
+          </label>
+          <label>
+            Bio
+            <textarea
+              name="bio"
+              defaultValue={profile.bio}
+              maxLength={300}
+              rows={4}
+            />
+          </label>
+          <label>
+            Website
+            <input name="website" type="url" defaultValue={profile.website} />
+          </label>
+          <label>
+            Location
+            <input
+              name="location"
+              defaultValue={profile.location}
+              maxLength={100}
+            />
+          </label>
+          <label>
+            Avatar
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={(e) => setAvatar(e.target.files?.[0] || null)}
+            />
+          </label>
+          {avatar && (
+            <img
+              className="uploadPreview round"
+              src={URL.createObjectURL(avatar)}
+              alt="Avatar preview"
+            />
+          )}
+          <label>
+            <input type="checkbox" name="remove_avatar" value="true" /> Remove
+            avatar
+          </label>
+          <label>
+            Cover image
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={(e) => setCover(e.target.files?.[0] || null)}
+            />
+          </label>
+          {cover && (
+            <img
+              className="uploadPreview"
+              src={URL.createObjectURL(cover)}
+              alt="Cover preview"
+            />
+          )}
+          <label>
+            <input type="checkbox" name="remove_cover_image" value="true" />{" "}
+            Remove cover
+          </label>
+          {error && <p className="formError">{error}</p>}
+          <div className="dialogActions">
+            <button type="button" className="secondary" onClick={close}>
+              Cancel
+            </button>
+            <button className="primary" disabled={busy}>
+              {busy ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </form>
+      </dialog>
+    </div>
+  );
+}

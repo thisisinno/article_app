@@ -17,12 +17,14 @@ from accounts.models import User, Profile
 from publishing.models import Post, Category, Comment, Media
 from interactions.models import PostLike, PostBookmark, CommentLike, Notification, WebPushSubscription
 from interactions.services import actor_kwargs, set_reaction, record_view, record_share
-from interactions.notifications import notify_new_post, notify_post_comment, notify_comment_reply, notify_comment_like, notify_post_share
+from interactions.notifications import notify_new_post, notify_post_comment, notify_comment_reply, notify_comment_like, notify_post_share, notify_post_quote
 
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 MAX_IMAGE = 5 * 1024 * 1024
 MAX_IMAGES = 10
-MAX_TOTAL_IMAGES = 40 * 1024 * 1024
+MAX_TOTAL_IMAGES = 45 * 1024 * 1024
+MAX_BODY = 30000
+MAX_QUOTE_BODY = 5000
 
 def payload(request):
     if request.content_type and request.content_type.startswith("multipart/form-data"):
@@ -51,6 +53,14 @@ def api_staff_required(view):
         return view(request,*args,**kwargs)
     return wrapped
 
+def api_active_user_required(view):
+    @wraps(view)
+    def wrapped(request,*args,**kwargs):
+        if not request.user.is_authenticated:return error("Please sign in to quote this post.",401,code="authentication_required",request=request)
+        if not request.user.is_active:return error("This account cannot quote posts.",403,code="inactive_account",request=request)
+        return view(request,*args,**kwargs)
+    return wrapped
+
 def csrf_failure(request,reason=""): return error("Security token expired. Please retry.",403,code="csrf_failed",request=request)
 
 def media_url(value): return value.url if value else None
@@ -73,7 +83,14 @@ def post_json(p,request,full=False,viewer=None):
     media=[{"id":str(x.pk),"type":x.media_type,"url":media_url(x.file),"alt_text":x.alt_text,"width":x.width,"height":x.height,"sort_order":x.sort_order} for x in sorted(items,key=lambda x:(x.sort_order,x.pk))]
     cover=media_url(p.cover_image)
     if not media and cover:media=[{"id":f"cover:{p.pk}","type":"image","url":cover,"alt_text":"","width":None,"height":None,"sort_order":0}]
-    return {"id":str(p.pk),"type":p.post_type,"title":p.title,"body":p.body if full else p.body[:640],"excerpt":p.excerpt,"status":p.status,"author":user_json(p.author),"category":{"id":p.category_id,"name":p.category.name,"slug":p.category.slug} if p.category else None,"cover_image":cover,"media":media,"pinned":p.pinned,"featured":p.featured,"published_at":(p.published_at or p.created_at).isoformat(),"counts":{"views":p.view_count,"likes":p.like_count,"comments":p.comment_count,"bookmarks":p.bookmark_count,"shares":p.share_count},"viewer_state":{"liked":liked,"bookmarked":bookmarked,"can_edit":manageable,"can_delete":manageable},"thread_root":str(p.thread_root_id) if p.thread_root_id else None,"thread_position":p.thread_position}
+    quoted=None
+    if p.quoted_post_id:
+        target=p.quoted_post
+        if target and target.status==Post.Status.PUBLISHED:
+            thumb=next(iter(target.media.all()),None)
+            quoted={"id":str(target.pk),"type":target.post_type,"title":target.title,"body_preview":target.body[:280],"excerpt":target.excerpt,"author":user_json(target.author),"category":{"id":target.category_id,"name":target.category.name,"slug":target.category.slug} if target.category else None,"published_at":(target.published_at or target.created_at).isoformat(),"media_preview":{"url":media_url(thumb.file),"alt_text":thumb.alt_text} if thumb else ({"url":media_url(target.cover_image),"alt_text":""} if target.cover_image else None)}
+        else:quoted={"id":str(p.quoted_post_id),"unavailable":True}
+    return {"id":str(p.pk),"type":p.post_type,"title":p.title,"body":p.body if full else p.body[:640],"excerpt":p.excerpt,"status":p.status,"author":user_json(p.author),"category":{"id":p.category_id,"name":p.category.name,"slug":p.category.slug} if p.category else None,"cover_image":cover,"media":media,"quoted_post":quoted,"pinned":p.pinned,"featured":p.featured,"published_at":(p.published_at or p.created_at).isoformat(),"counts":{"views":p.view_count,"likes":p.like_count,"comments":p.comment_count,"quotes":p.quote_count,"bookmarks":p.bookmark_count,"shares":p.share_count},"viewer_state":{"liked":liked,"bookmarked":bookmarked,"can_edit":manageable,"can_delete":manageable,"can_quote":bool(request.user.is_authenticated and request.user.is_active)},"thread_root":str(p.thread_root_id) if p.thread_root_id else None,"thread_position":p.thread_position}
 
 def serialize_posts(rows,request,full=False):
     ids=[x.pk for x in rows]; actor=actor_kwargs(request)
@@ -141,7 +158,7 @@ def logout_view(request):logout(request);return JsonResponse({"ok":True})
 
 @require_http_methods(["GET"])
 def feed(request):
-    qs=Post.objects.filter(status="published",published_at__lte=timezone.now(),thread_root__isnull=True).select_related("author","author__profile","category").prefetch_related("media")
+    qs=Post.objects.filter(status="published",published_at__lte=timezone.now(),thread_root__isnull=True).select_related("author","author__profile","category","quoted_post","quoted_post__author","quoted_post__author__profile","quoted_post__category").prefetch_related("media","quoted_post__media")
     if request.GET.get("category"):qs=qs.filter(category__slug=request.GET["category"],category__is_active=True)
     rows,cursor=paginated_rows(qs,request)
     return JsonResponse({"results":serialize_posts(rows,request),"next_cursor":cursor})
@@ -157,20 +174,23 @@ def create_post(request):
     d=payload(request);typ=d.get("type","short");body=d.get("body","").strip();title=d.get("title","").strip()
     if typ not in Post.Type.values:return error("Invalid post type.",field="type",code="validation_error")
     if not body:return error("Body is required.",field="body",code="validation_error")
+    if len(body)>MAX_BODY:return error("Post content must be 30,000 characters or fewer.",field="body",code="content_too_long")
+    if len(title)>240:return error("Title must be 240 characters or fewer.",field="title",code="title_too_long")
+    if len(d.get("excerpt","") or "")>400:return error("Excerpt must be 400 characters or fewer.",field="excerpt",code="excerpt_too_long")
     if typ==Post.Type.ARTICLE and not title:return error("Article title is required.",field="title",code="validation_error")
     category=Category.objects.filter(slug=d.get("category",""),is_active=True).first()
     if not category:return error("Select a valid active category.",field="category",code="invalid_category")
     images=request.FILES.getlist("images")
     if not images and request.FILES.get("cover_image"):images=[request.FILES["cover_image"]]
     if len(images)>MAX_IMAGES:return error("Select no more than 10 images.",field="images",code="too_many_images")
-    if sum(x.size for x in images)>MAX_TOTAL_IMAGES:return error("Selected images must total 40 MB or less.",field="images",code="request_too_large")
+    if sum(x.size for x in images)>MAX_TOTAL_IMAGES:return error("The selected images are too large.",field="images",code="upload_too_large")
     if len({(x.name,x.size) for x in images})!=len(images):return error("Remove duplicate images before publishing.",field="images",code="duplicate_image")
     try:dimensions=[validate_image(image) for image in images]
     except ValidationError as exc:return error(exc.message,field="images",code="invalid_image")
     saved=[]
     try:
         with transaction.atomic():
-            p=Post.objects.create(author=request.user,post_type=typ,title=title[:240],body=body,excerpt=d.get("excerpt","")[:400],category=category,status=Post.Status.PUBLISHED,published_at=timezone.now())
+            p=Post.objects.create(author=request.user,post_type=typ,title=title,body=body,excerpt=d.get("excerpt",""),category=category,status=Post.Status.PUBLISHED,published_at=timezone.now())
             alts=d.getlist("image_alt_texts") if hasattr(d,"getlist") else []
             for index,(image,(width,height)) in enumerate(zip(images,dimensions)):
                 item=Media.objects.create(post=p,file=image,media_type="image",alt_text=(alts[index] if index<len(alts) else "")[:300],width=width,height=height,sort_order=index);saved.append(item.file.name)
@@ -182,13 +202,20 @@ def create_post(request):
 
 @require_http_methods(["GET","PATCH","DELETE"])
 def post_detail(request,post_id):
-    p=get_object_or_404(Post.objects.select_related("author","author__profile","category").prefetch_related("media"),pk=post_id)
+    p=get_object_or_404(Post.objects.select_related("author","author__profile","category","quoted_post","quoted_post__author","quoted_post__author__profile","quoted_post__category").prefetch_related("media","quoted_post__media"),pk=post_id)
     if request.method=="GET":
         if p.status!="published":return error("Post unavailable.",404,code="not_found")
         data=post_json(p,request,True);thread_rows=list(p.thread_entries.filter(status="published").select_related("author","author__profile","category").prefetch_related("media"));data["thread"]=serialize_posts(thread_rows,request,True);return JsonResponse(data)
     if not request.user.is_authenticated:return error("Authentication required",401,code="authentication_required")
     if not can_manage_post(request.user,p):return error("You cannot manage this post.",403,code="forbidden")
-    if request.method=="DELETE":p.status="removed";p.removed_at=timezone.now();p.save(update_fields=("status","removed_at"));return JsonResponse({"deleted":True,"post_id":str(p.pk),"redirect":"/"})
+    if request.method=="DELETE":
+        with transaction.atomic():
+            locked=Post.objects.select_for_update().get(pk=p.pk)
+            if locked.status==Post.Status.PUBLISHED:
+                locked.status=Post.Status.REMOVED;locked.removed_at=timezone.now();locked.save(update_fields=("status","removed_at"))
+                if locked.quoted_post_id:Post.objects.filter(pk=locked.quoted_post_id,quote_count__gt=0).update(quote_count=F("quote_count")-1)
+            count=Post.objects.values_list("quote_count",flat=True).get(pk=locked.quoted_post_id) if locked.quoted_post_id else None
+        return JsonResponse({"deleted":True,"post_id":str(p.pk),"redirect":"/","quoted_post_id":str(locked.quoted_post_id) if locked.quoted_post_id else None,"quoted_post_quote_count":count})
     d=payload(request)
     for key in ("title","body","excerpt"):
         if key in d:setattr(p,key,d[key])
@@ -207,6 +234,21 @@ def thread(request,post_id):
     pos=(root.thread_entries.order_by("-thread_position").values_list("thread_position",flat=True).first() or 0)+1
     p=Post.objects.create(author=request.user,body=body[:30000],category=root.category,status="published",published_at=timezone.now(),thread_root=root,thread_position=pos)
     return JsonResponse(post_json(p,request,True),status=201)
+
+@api_active_user_required
+@require_POST
+def quote_post(request,post_id):
+    d=payload(request);body=d.get("body","").strip()
+    if not body:return error("Quote commentary is required.",field="body",code="validation_error")
+    if len(body)>MAX_QUOTE_BODY:return error("Quote commentary must be 5,000 characters or fewer.",field="body",code="quote_too_long")
+    with transaction.atomic():
+        target=get_object_or_404(Post.objects.select_for_update().select_related("category"),pk=post_id,status=Post.Status.PUBLISHED,published_at__lte=timezone.now())
+        if not target.category_id:return error("This post cannot be quoted because it has no category.",409,code="invalid_category")
+        quote=Post.objects.create(author=request.user,post_type=Post.Type.SHORT,body=body,category=target.category,quoted_post=target,status=Post.Status.PUBLISHED,published_at=timezone.now())
+        Post.objects.filter(pk=target.pk).update(quote_count=F("quote_count")+1);target.refresh_from_db(fields=("quote_count",))
+        transaction.on_commit(lambda:notify_post_quote(target,quote))
+    quote=Post.objects.select_related("author","author__profile","category","quoted_post","quoted_post__author","quoted_post__author__profile","quoted_post__category").prefetch_related("media","quoted_post__media").get(pk=quote.pk)
+    return JsonResponse({"post":post_json(quote,request,True),"quoted_post_quote_count":target.quote_count},status=201)
 
 @require_http_methods(["POST","DELETE"])
 def reaction(request,post_id,kind):
@@ -294,16 +336,17 @@ def comment_like(request,comment_id):
     if request.method=="POST" and changed:transaction.on_commit(lambda:notify_comment_like(c,request.user if request.user.is_authenticated else None,getattr(request,"visitor",None)))
     return JsonResponse({"active":active,"count":c.like_count})
 
-def categories(request):return JsonResponse({"results":[{"id":c.pk,"name":c.name,"slug":c.slug,"description":c.description} for c in Category.objects.filter(is_active=True).order_by("sort_order","name")]})
+def categories(request):
+    response=JsonResponse({"results":[{"id":c.pk,"name":c.name,"slug":c.slug,"description":c.description} for c in Category.objects.filter(is_active=True).order_by("sort_order","name","id")]});response["Cache-Control"]="private, max-age=30";return response
 
 def search(request):
-    q=request.GET.get("q","").strip();typ=request.GET.get("type","top");qs=Post.objects.filter(status="published",published_at__lte=timezone.now()).select_related("author","author__profile","category").prefetch_related("media")
+    q=request.GET.get("q","").strip();typ=request.GET.get("type","top");qs=Post.objects.filter(status="published",published_at__lte=timezone.now()).select_related("author","author__profile","category","quoted_post","quoted_post__author","quoted_post__author__profile","quoted_post__category").prefetch_related("media","quoted_post__media")
     if q:qs=qs.filter(Q(title__icontains=q)|Q(body__icontains=q)|Q(category__name__icontains=q))
     if request.GET.get("category"):qs=qs.filter(category__slug=request.GET["category"])
     if typ=="articles":qs=qs.filter(post_type="article")
     if typ=="posts":qs=qs.filter(post_type="short")
     if typ=="latest":qs=qs.order_by("-published_at")
-    rows=list(qs[:20]);return JsonResponse({"posts":serialize_posts(rows,request),"categories":[{"id":c.pk,"name":c.name,"slug":c.slug,"description":c.description} for c in Category.objects.filter(is_active=True).order_by("sort_order","name")]})
+    rows=list(qs[:20]);return JsonResponse({"posts":serialize_posts(rows,request)})
 
 def profile(request,username):
     u=get_object_or_404(User.objects.select_related("profile"),username=username);p,_=Profile.objects.get_or_create(user=u)
@@ -318,9 +361,10 @@ def profile_posts(request,username):
     elif tab=="likes":qs=Post.objects.filter(likes__user=u,status="published")
     else:
         qs=Post.objects.filter(author=u,status="published")
-        if tab=="articles":qs=qs.filter(post_type="article")
-        elif tab=="posts":qs=qs.filter(post_type="short")
-    qs=qs.select_related("author","author__profile","category").prefetch_related("media");rows,cursor=paginated_rows(qs,request);return JsonResponse({"results":serialize_posts(rows,request),"next_cursor":cursor})
+        if tab=="quotes":qs=qs.filter(quoted_post__isnull=False)
+        elif tab=="articles":qs=qs.filter(post_type="article",quoted_post__isnull=True)
+        elif tab=="posts":qs=qs.filter(post_type="short",quoted_post__isnull=True)
+    qs=qs.select_related("author","author__profile","category","quoted_post","quoted_post__author","quoted_post__author__profile","quoted_post__category").prefetch_related("media","quoted_post__media");rows,cursor=paginated_rows(qs,request);return JsonResponse({"results":serialize_posts(rows,request),"next_cursor":cursor})
 
 @api_login_required
 @require_http_methods(["PATCH"])

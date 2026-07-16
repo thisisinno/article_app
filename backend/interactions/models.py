@@ -32,7 +32,7 @@ class CategoryFollow(models.Model):
     class Meta: constraints=[models.UniqueConstraint(fields=("user","category"),name="unique_category_follow")]
 class Notification(models.Model):
     class Kind(models.TextChoices):
-        NEW_POST="new_post","New post"; POST_LIKE="post_like","Post like"; POST_COMMENT="post_comment","Post comment"; COMMENT_REPLY="comment_reply","Comment reply"; COMMENT_LIKE="comment_like","Comment like"; POST_SHARE="post_share","Post share"
+        NEW_POST="new_post","New post"; POST_LIKE="post_like","Post like"; POST_COMMENT="post_comment","Post comment"; COMMENT_REPLY="comment_reply","Comment reply"; COMMENT_LIKE="comment_like","Comment like"; POST_SHARE="post_share","Post share"; POST_QUOTE="post_quote","Post quote"
     id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False); recipient=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name="notifications"); actor=models.ForeignKey(settings.AUTH_USER_MODEL,null=True,blank=True,on_delete=models.SET_NULL); kind=models.CharField(max_length=20,choices=Kind.choices); post=models.ForeignKey("publishing.Post",null=True,blank=True,on_delete=models.CASCADE); comment=models.ForeignKey("publishing.Comment",null=True,blank=True,on_delete=models.CASCADE); text=models.CharField(max_length=240,blank=True); read_at=models.DateTimeField(null=True,blank=True); dedupe_key=models.CharField(max_length=180,null=True,blank=True,unique=True); created_at=models.DateTimeField(auto_now_add=True)
     class Meta:
         ordering=("-created_at",)

@@ -49,6 +49,7 @@ class Post(models.Model):
     removed_at = models.DateTimeField(null=True, blank=True)
     view_count = models.PositiveIntegerField(default=0); like_count = models.PositiveIntegerField(default=0)
     comment_count = models.PositiveIntegerField(default=0); repost_count = models.PositiveIntegerField(default=0)
+    quote_count = models.PositiveIntegerField(default=0)
     bookmark_count = models.PositiveIntegerField(default=0); share_count = models.PositiveIntegerField(default=0)
     class Meta:
         ordering = ("-pinned", "-published_at", "-created_at")

@@ -11,6 +11,7 @@ TEXT = {
     "comment_reply": "replied to your comment",
     "comment_like": "liked your comment",
     "post_share": "shared your post",
+    "post_quote": "quoted your post",
 }
 
 def _create(recipient, kind, post, *, actor=None, comment=None, key):
@@ -58,3 +59,6 @@ def notify_comment_like(comment, actor_user=None, actor_visitor=None):
 
 def notify_post_share(post, actor_user=None, actor_visitor=None):
     return _create(post.author, "post_share", post, actor=actor_user, key=f"post_share:{post.pk}:{actor_user.pk if actor_user else 'reader'}")
+
+def notify_post_quote(original, quote):
+    return _create(original.author,"post_quote",quote,actor=quote.author,key=f"post_quote:{quote.pk}:{original.author_id}")

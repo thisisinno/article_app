@@ -186,7 +186,7 @@ export async function api<T>(
     headers.set("Content-Type", "application/json");
   if (unsafe) headers.set("X-CSRFToken", await getCsrfToken());
   try {
-    return await request<T>(`${API_BASE}${path}`, { ...init, method, headers });
+    return await request<T>(`${API_BASE}${path}`, { ...init,timeoutMs:init.timeoutMs??(init.body instanceof FormData?120_000:unsafe?30_000:15_000), method, headers });
   } catch (error) {
     if (
       unsafe &&
@@ -238,6 +238,7 @@ export function validateAuthResponse(value: unknown, requireUser = false) {
   }
   return value as { user: import("./types").User | null };
 }
+export function validateCategoriesResponse(value: unknown) {if(!record(value)||!Array.isArray(value.results)||!value.results.every(item=>record(item)&&typeof item.id==="number"&&typeof item.name==="string"&&typeof item.slug==="string"&&typeof item.description==="string"))throw new ApiError("The category server returned an invalid response.",502,"invalid_categories_response",false);return value as {results:import("./types").Category[]}}
 
 export function validateFeedResponse(value: unknown) {
   if (

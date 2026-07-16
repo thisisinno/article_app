@@ -12,9 +12,10 @@ REQUIRED = {
     "publishing.Post": {
         "category_id", "post_type", "status", "published_at",
         "published_notification_sent_at", "view_count", "like_count",
-        "comment_count", "repost_count", "bookmark_count", "share_count",
+        "comment_count", "repost_count", "quote_count", "bookmark_count", "share_count","quoted_post_id",
     },
     "publishing.Comment": set(),
+    "publishing.Media": set(),
     "interactions.PostLike": set(),
     "interactions.PostBookmark": set(),
     "interactions.PostView": set(),

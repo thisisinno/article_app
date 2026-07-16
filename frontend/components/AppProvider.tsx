@@ -15,7 +15,9 @@ import {
   refreshCsrfToken,
   validateAuthResponse,
 } from "@/lib/api";
-import type { Category, User } from "@/lib/types";
+import type { Post, User } from "@/lib/types";
+import { QuotedPostPreview } from "./quotes/QuotedPostPreview";
+import { useCategories } from "./categories/CategoriesProvider";
 import { Avatar } from "./Avatar";
 import {
   CloseIcon,
@@ -41,6 +43,7 @@ type Ctx = {
   closeShare: () => void;
   openAuth: () => void;
   openComposer: () => void;
+  openQuote: (post: Post) => void;
   close: () => void;
   refresh: () => Promise<User | null>;
   refreshUnread: () => Promise<void>;
@@ -61,6 +64,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [composerOpen, setComposer] = useState(false),
     [commentsTarget, setCommentsTarget] = useState<CommentsTarget | null>(null),
     [shareTarget, setShareTarget] = useState<ShareTarget | null>(null),
+    [quoteTarget, setQuoteTarget] = useState<Post | null>(null),
     [unread, setUnread] = useState(0),
     [message, setMessage] = useState("");
   const refresh = useCallback(async () => {
@@ -160,6 +164,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             : user
               ? undefined
               : setAuth(true),
+        openQuote: (post) => (user ? setQuoteTarget(post) : setAuth(true)),
         close,
         refresh,
         refreshUnread,
@@ -170,6 +175,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       {children}
       <AuthDialog />
       <ComposerDialog />
+      <QuoteComposer
+        target={quoteTarget}
+        onClose={() => setQuoteTarget(null)}
+      />
       <CommentsSheet
         target={commentsTarget}
         onClose={() => setCommentsTarget(null)}
@@ -181,6 +190,117 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         </div>
       )}
     </Context.Provider>
+  );
+}
+function QuoteComposer({
+  target,
+  onClose,
+}: {
+  target: Post | null;
+  onClose: () => void;
+}) {
+  const { toast } = useApp(),
+    [body, setBody] = useState(""),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  const key = target ? `jesca-quote-draft:${target.id}` : "";
+  useEffect(() => {
+    if (target) setBody(localStorage.getItem(key) || "");
+  }, [target, key]);
+  useEffect(() => {
+    if (target) localStorage.setItem(key, body);
+  }, [target, key, body]);
+  if (!target) return null;
+  const current=target;
+  async function publish() {
+    if (!body.trim() || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const value = await api<{ post: Post; quoted_post_quote_count: number }>(
+        `/posts/${current.id}/quote/`,
+        { method: "POST", body: JSON.stringify({ body }) },
+      );
+      localStorage.removeItem(key);
+      dispatchEvent(
+        new CustomEvent("jesca:post-quotes-updated", {
+          detail: { postId: current.id, count: value.quoted_post_quote_count },
+        }),
+      );
+      dispatchEvent(new Event("jesca:feed-refresh"));
+      setBody("");
+      onClose();
+      toast("Quote published");
+    } catch (x) {
+      setError(
+        x instanceof Error ? x.message : "Quote could not be published.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  const preview = target.quoted_post || {
+    id: target.id,
+    type: target.type,
+    title: target.title,
+    body_preview: target.body,
+    excerpt: target.excerpt,
+    author: target.author,
+    category: target.category,
+    published_at: target.published_at,
+    media_preview: target.media[0]
+      ? { url: target.media[0].url, alt_text: target.media[0].alt_text }
+      : null,
+  };
+  return (
+    <div className="overlay composerOverlay">
+      <dialog open className="composerDialog" aria-modal="true">
+        <header>
+          <button
+            className="iconButton"
+            onClick={onClose}
+            aria-label="Close quote composer"
+          >
+            <CloseIcon />
+          </button>
+          <b>Quote post</b>
+          <button
+            className="primary mobilePublish"
+            disabled={busy || !body.trim()}
+            onClick={() => void publish()}
+          >
+            Quote
+          </button>
+        </header>
+        <label>
+          Commentary
+          <textarea
+            autoFocus
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            maxLength={5000}
+            rows={5}
+            placeholder="Add your thoughts"
+          />
+        </label>
+        <QuotedPostPreview post={preview} />
+        {error && (
+          <p className="formError" role="alert">
+            {error}
+          </p>
+        )}
+        <footer>
+          <span>{body.length}/5,000</span>
+          <button
+            className="primary desktopPublish"
+            disabled={busy || !body.trim()}
+            onClick={() => void publish()}
+          >
+            {busy ? "Publishing…" : "Publish Quote"}
+          </button>
+        </footer>
+      </dialog>
+    </div>
   );
 }
 function AuthDialog() {
@@ -304,15 +424,20 @@ function AuthDialog() {
 }
 function ComposerDialog() {
   const { composerOpen, close, user, toast } = useApp();
+  const {
+    categories,
+    status: categoryStatus,
+    error: categoryFailure,
+    refreshCategories,
+  } = useCategories();
   const [type, setType] = useState<"short" | "article">("short"),
     [body, setBody] = useState(""),
     [title, setTitle] = useState(""),
     [excerpt, setExcerpt] = useState(""),
     [category, setCategory] = useState(""),
-    [categories, setCategories] = useState<Category[]>([]),
-    [loading, setLoading] = useState(false),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState(""),
+    [publishError, setPublishError] = useState(""),
+    [imageError, setImageError] = useState(""),
     [images, setImages] = useState<
       Array<{ file: File; url: string; alt: string }>
     >([]),
@@ -343,17 +468,13 @@ function ComposerDialog() {
     [body, title, excerpt, category, type],
   );
   useEffect(() => {
-    if (!composerOpen) return;
-    setLoading(true);
-    api<{ results: Category[] }>("/categories/")
-      .then((x) => setCategories(x.results))
-      .catch((x) =>
-        setError(
-          x instanceof Error ? x.message : "Categories could not be loaded.",
-        ),
-      )
-      .finally(() => setLoading(false));
-  }, [composerOpen]);
+    if (
+      category &&
+      categoryStatus === "ready" &&
+      !categories.some((c) => c.slug === category)
+    )
+      setCategory("");
+  }, [category, categoryStatus, categories]);
   useEffect(() => {
     if (!composerOpen && imagesRef.current.length) {
       imagesRef.current.forEach((item) => URL.revokeObjectURL(item.url));
@@ -363,11 +484,11 @@ function ComposerDialog() {
   if (!composerOpen || !user?.can_publish) return null;
   async function publish() {
     if (!category) {
-      setError("Select a category.");
+      setPublishError("Select a category.");
       return;
     }
     setBusy(true);
-    setError("");
+    setPublishError("");
     const form = new FormData();
     form.set("type", type);
     form.set("body", body);
@@ -391,7 +512,12 @@ function ComposerDialog() {
       dispatchEvent(new Event("jesca:feed-refresh"));
       toast("Published successfully");
     } catch (x) {
-      setError(x instanceof Error ? x.message : "Publishing failed.");
+      if (x instanceof ApiError && x.code === "invalid_category") {
+        setCategory("");
+        void refreshCategories();
+        setPublishError("Choose an available category and retry.");
+      } else
+        setPublishError(x instanceof Error ? x.message : "Publishing failed.");
     } finally {
       setBusy(false);
     }
@@ -441,10 +567,12 @@ function ComposerDialog() {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             required
-            disabled={loading}
+            disabled={categoryStatus === "idle" || categoryStatus === "loading"}
           >
             <option value="">
-              {loading ? "Loading categories…" : "Select a category"}
+              {categoryStatus === "idle" || categoryStatus === "loading"
+                ? "Loading categories…"
+                : "Select a category"}
             </option>
             {categories.map((c) => (
               <option value={c.slug} key={c.id}>
@@ -453,7 +581,18 @@ function ComposerDialog() {
             ))}
           </select>
         </label>
-        {!loading && !categories.length && (
+        {categoryFailure && categoryStatus === "error" && (
+          <p className="formError">
+            Categories could not be loaded.{" "}
+            <button
+              className="textButton"
+              onClick={() => void refreshCategories()}
+            >
+              Retry
+            </button>
+          </p>
+        )}
+        {categoryStatus === "ready" && !categories.length && (
           <p className="formError">
             {user.is_superuser ? (
               <a href="https://jesca.schoolsoft.online/admin/publishing/category/">
@@ -506,12 +645,12 @@ function ComposerDialog() {
           onChange={(e) => {
             const selected = [...(e.target.files || [])];
             if (images.length + selected.length > 10) {
-              setError("Select no more than 10 images.");
+              setImageError("Select no more than 10 images.");
               e.target.value = "";
               return;
             }
             if (selected.some((file) => file.size > 5 * 1024 * 1024)) {
-              setError("Each image must be 5 MB or smaller.");
+              setImageError("Each image must be 5 MB or smaller.");
               e.target.value = "";
               return;
             }
@@ -523,7 +662,7 @@ function ComposerDialog() {
                 alt: "",
               })),
             ]);
-            setError("");
+            setImageError("");
             e.target.value = "";
           }}
         />
@@ -656,9 +795,14 @@ function ComposerDialog() {
             width: 18px;
           }
         `}</style>
-        {error && (
+        {imageError && (
           <p className="formError" role="alert">
-            {error}
+            {imageError}
+          </p>
+        )}
+        {publishError && (
+          <p className="formError" role="alert">
+            {publishError}
           </p>
         )}
         <footer>

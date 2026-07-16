@@ -1,2 +1,47 @@
-"use client";import{useEffect,useState}from"react";import{useRouter,useSearchParams}from"next/navigation";import{Feed}from"@/components/Feed";import{api}from"@/lib/api";import type{Category}from"@/lib/types";import{CategoryTabsSkeleton}from"@/components/skeletons/Skeletons";import styles from"./page.module.css";
-export default function Home(){const sp=useSearchParams(),router=useRouter(),category=sp.get("category")||"",[categories,setCategories]=useState<Category[]>([]),[state,setState]=useState<"loading"|"ready"|"error">("loading"),[retry,setRetry]=useState(0);useEffect(()=>{const c=new AbortController();setState("loading");api<{results:Category[]}>("/categories/",{signal:c.signal}).then(x=>{setCategories(x.results);setState("ready")}).catch(()=>setState("error"));return()=>c.abort()},[retry]);function select(slug:string){const q=new URLSearchParams(sp);slug?q.set("category",slug):q.delete("category");router.replace(q.size?`/?${q}`:"/",{scroll:false})}return <div className="content"><header className={`pageHeader ${styles.premiumHeader}`}><span/><h1 className={styles.brandTitle}><i className={styles.brandMark}/>Jesca Social Work</h1><span/></header>{state==="loading"?<CategoryTabsSkeleton/>:<div className={styles.categories}><button className={!category?styles.selected:""} onClick={()=>select("")}>All</button>{categories.map(x=><button className={category===x.slug?styles.selected:""} onClick={()=>select(x.slug)} key={x.id}>{x.name}</button>)}{state==="error"&&<button className={styles.retry} onClick={()=>setRetry(x=>x+1)}>Retry categories</button>}</div>}<Feed path={`/feed/${category?`?category=${encodeURIComponent(category)}`:""}`}/></div>}
+"use client";
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Feed } from "@/components/Feed";
+import { CategoryTabs } from "@/components/categories/CategoryTabs";
+import { useCategories } from "@/components/categories/CategoriesProvider";
+import styles from "./page.module.css";
+export default function Home() {
+  const sp = useSearchParams(),
+    router = useRouter(),
+    category = sp.get("category") || "",
+    { categories, hasLoadedOnce } = useCategories();
+  function select(slug: string) {
+    const q = new URLSearchParams(sp);
+    slug ? q.set("category", slug) : q.delete("category");
+    router.replace(q.size ? `/?${q}` : "/", { scroll: false });
+  }
+  useEffect(() => {
+    if (
+      hasLoadedOnce &&
+      category &&
+      !categories.some((x) => x.slug === category)
+    )
+      select("");
+  }, [categories, category, hasLoadedOnce]);
+  return (
+    <div className="content">
+      <header className={`pageHeader ${styles.premiumHeader}`}>
+        <span />
+        <h1 className={styles.brandTitle}>
+          <i className={styles.brandMark} />
+          Jesca Social Work
+        </h1>
+        <span />
+      </header>
+      <CategoryTabs
+        selected={category}
+        onSelect={select}
+        className={styles.categories}
+        selectedClass={styles.selected}
+      />
+      <Feed
+        path={`/feed/${category ? `?category=${encodeURIComponent(category)}` : ""}`}
+      />
+    </div>
+  );
+}

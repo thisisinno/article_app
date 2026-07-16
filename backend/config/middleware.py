@@ -1,5 +1,7 @@
 import logging
 import uuid
+from django.core.exceptions import RequestDataTooBig,TooManyFilesSent
+from django.http.multipartparser import MultiPartParserError
 
 from django.http import JsonResponse
 
@@ -19,6 +21,11 @@ class ApiResponseMiddleware:
         is_api = request.path.startswith(API_PREFIX)
         try:
             response = self.get_response(request)
+        except (RequestDataTooBig,TooManyFilesSent,MultiPartParserError) as exc:
+            if not is_api:raise
+            if isinstance(exc,TooManyFilesSent):response=self._error(request,400,"too_many_images","You can attach up to 10 images.")
+            elif isinstance(exc,RequestDataTooBig):response=self._error(request,413,"upload_too_large","The selected images are too large.")
+            else:response=self._error(request,400,"invalid_multipart","The upload request is invalid.")
         except Exception as exc:
             if not is_api:
                 raise
@@ -45,6 +52,7 @@ class ApiResponseMiddleware:
                 405: ("method_not_allowed", "Method not allowed"),
                 409: ("conflict", "Conflict"),
                 429: ("rate_limited", "Too many requests"),
+                413: ("upload_too_large", "The selected images are too large."),
                 500: ("server_error", "The server could not complete the request."),
             }.get(response.status_code, ("invalid_response", "The server returned an invalid response."))
             logger.warning(

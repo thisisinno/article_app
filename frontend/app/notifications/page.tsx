@@ -1,4 +1,209 @@
 "use client";
-import {useEffect,useRef,useState} from "react";import {useRouter} from "next/navigation";import {api} from "@/lib/api";import type {Notification} from "@/lib/types";import {useApp} from "@/components/AppProvider";import {BellIcon,MoreIcon,TrashIcon} from "@/components/Icons";import {NotificationRow} from "@/components/notifications/NotificationRow";import {NotificationsSkeleton} from "@/components/skeletons/Skeletons";import styles from "./notifications.module.css";
-type State={status:"loading"|"ready"|"error";items:Notification[];message?:string};
-export default function Notifications(){const{user,authStatus,openAuth,unread,setUnreadCount,refreshUnread}=useApp(),router=useRouter(),[state,setState]=useState<State>({status:"loading",items:[]}),[menu,setMenu]=useState(false),[retry,setRetry]=useState(0),sequence=useRef(0);useEffect(()=>{if(!user)return;const c=new AbortController(),seq=++sequence.current;setState(s=>({...s,status:"loading"}));api<{results:Notification[];unread_count:number}>("/notifications/",{signal:c.signal}).then(x=>{if(seq===sequence.current){setState({status:"ready",items:x.results});setUnreadCount(x.unread_count)}}).catch(()=>{if(seq===sequence.current)setState(s=>({...s,status:"error",message:"Unable to load notifications."}))});return()=>c.abort()},[user,retry,setUnreadCount]);async function read(item:Notification){const wasUnread=!item.read;if(wasUnread){setState(s=>({...s,items:s.items.map(x=>x.id===item.id?{...x,read:true}:x)}));setUnreadCount(unread-1)}const suffix=item.open_comments?`?comments=1${item.comment_id?`&comment=${item.comment_id}`:""}`:"";if(item.post)router.push(`/post/${item.post.id}${suffix}`);if(!wasUnread)return;try{const value=await api<{notification:Notification;unread_count:number}>(`/notifications/${item.id}/read/`,{method:"POST"});setUnreadCount(value.unread_count)}catch{void refreshUnread()}}async function remove(item:Notification){const previous=state.items;setState(s=>({...s,items:s.items.filter(x=>x.id!==item.id)}));if(!item.read)setUnreadCount(unread-1);try{const value=await api<{deleted:boolean;unread_count:number}>(`/notifications/${item.id}/`,{method:"DELETE"});setUnreadCount(value.unread_count)}catch{setState(s=>({...s,items:previous,message:"Notification could not be deleted."}));void refreshUnread()}}async function readAll(){const previous=state.items,previousUnread=unread;setState(s=>({...s,items:s.items.map(x=>({...x,read:true}))}));setUnreadCount(0);try{const x=await api<{updated:number;unread_count:number}>("/notifications/read-all/",{method:"POST"});setUnreadCount(x.unread_count)}catch{setState(s=>({...s,items:previous}));setUnreadCount(previousUnread)}}async function clear(){const previous=state.items,previousUnread=unread;setState(s=>({...s,items:[]}));setUnreadCount(0);setMenu(false);try{const x=await api<{deleted:number;unread_count:number}>("/notifications/clear/",{method:"DELETE"});setUnreadCount(x.unread_count)}catch{setState(s=>({...s,items:previous}));setUnreadCount(previousUnread)}}if(authStatus==="loading")return <div className="content"><NotificationsSkeleton/></div>;if(!user)return <div className="empty"><BellIcon/><h2>Sign in to view notifications</h2><button className="primary" onClick={openAuth}>Sign in</button></div>;return <div className="content"><header className={`pageHeader ${styles.header}`}><div><h1>Notifications</h1>{unread>0&&<small>{unread} unread</small>}</div><div>{unread>0&&<button className="textButton" onClick={()=>void readAll()}>Mark all read</button>}<button className="iconButton" aria-label="Notification options" onClick={()=>setMenu(!menu)}><MoreIcon/></button>{menu&&<div className={styles.menu}><button onClick={()=>void clear()}><TrashIcon/>Clear notifications</button></div>}</div></header>{state.message&&<p className="formError" role="alert">{state.message}</p>}{state.status==="loading"?<NotificationsSkeleton/>:state.status==="error"?<div className="error"><p>{state.message}</p><button className="secondary" onClick={()=>setRetry(x=>x+1)}>Retry</button></div>:state.items.length?<div className={styles.list}>{state.items.map(n=><NotificationRow key={n.id} item={n} onOpen={()=>void read(n)} onDelete={()=>void remove(n)}/>)}</div>:<div className="empty"><BellIcon/><h2>You’re all caught up</h2><p>New activity will appear here.</p></div>}</div>}
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
+import type { Notification } from "@/lib/types";
+import { useApp } from "@/components/AppProvider";
+import { BellIcon, MoreIcon, TrashIcon } from "@/components/Icons";
+import { NotificationRow } from "@/components/notifications/NotificationRow";
+import { NotificationsSkeleton } from "@/components/skeletons/Skeletons";
+import styles from "./notifications.module.css";
+type State = {
+  status: "loading" | "ready" | "error";
+  items: Notification[];
+  message?: string;
+};
+export default function Notifications() {
+  const { user, authStatus, openAuth, unread, setUnreadCount, refreshUnread } =
+      useApp(),
+    router = useRouter(),
+    [state, setState] = useState<State>({ status: "loading", items: [] }),
+    [menu, setMenu] = useState(false),
+    [retry, setRetry] = useState(0),
+    sequence = useRef(0);
+  useEffect(() => {
+    if (!user) return;
+    const c = new AbortController(),
+      seq = ++sequence.current;
+    setState((s) => ({ ...s, status: "loading" }));
+    api<{ results: Notification[]; unread_count: number }>("/notifications/", {
+      signal: c.signal,
+    })
+      .then((x) => {
+        if (seq === sequence.current) {
+          setState({ status: "ready", items: x.results });
+          setUnreadCount(x.unread_count);
+        }
+      })
+      .catch(() => {
+        if (seq === sequence.current)
+          setState((s) => ({
+            ...s,
+            status: "error",
+            message: "Unable to load notifications.",
+          }));
+      });
+    return () => c.abort();
+  }, [user, retry, setUnreadCount]);
+  async function read(item: Notification) {
+    const wasUnread = !item.read;
+    if (wasUnread) {
+      setState((s) => ({
+        ...s,
+        items: s.items.map((x) =>
+          x.id === item.id ? { ...x, read: true } : x,
+        ),
+      }));
+      setUnreadCount(unread - 1);
+    }
+    const suffix = item.open_comments
+      ? `?comments=1${item.comment_id ? `&comment=${item.comment_id}` : ""}`
+      : "";
+    if (item.post) router.push(`/post/${item.post.id}${suffix}`);
+    if (!wasUnread) return;
+    try {
+      const value = await api<{
+        notification: Notification;
+        unread_count: number;
+      }>(`/notifications/${item.id}/read/`, { method: "POST" });
+      setUnreadCount(value.unread_count);
+    } catch {
+      void refreshUnread();
+    }
+  }
+  async function remove(item: Notification) {
+    const previous = state.items;
+    setState((s) => ({ ...s, items: s.items.filter((x) => x.id !== item.id) }));
+    if (!item.read) setUnreadCount(unread - 1);
+    try {
+      const value = await api<{ deleted: boolean; unread_count: number }>(
+        `/notifications/${item.id}/`,
+        { method: "DELETE" },
+      );
+      setUnreadCount(value.unread_count);
+    } catch {
+      setState((s) => ({
+        ...s,
+        items: previous,
+        message: "Notification could not be deleted.",
+      }));
+      void refreshUnread();
+    }
+  }
+  async function readAll() {
+    const previous = state.items,
+      previousUnread = unread;
+    setState((s) => ({
+      ...s,
+      items: s.items.map((x) => ({ ...x, read: true })),
+    }));
+    setUnreadCount(0);
+    try {
+      const x = await api<{ updated: number; unread_count: number }>(
+        "/notifications/read-all/",
+        { method: "POST" },
+      );
+      setUnreadCount(x.unread_count);
+    } catch {
+      setState((s) => ({ ...s, items: previous }));
+      setUnreadCount(previousUnread);
+    }
+  }
+  async function clear() {
+    const previous = state.items,
+      previousUnread = unread;
+    setState((s) => ({ ...s, items: [] }));
+    setUnreadCount(0);
+    setMenu(false);
+    try {
+      const x = await api<{ deleted: number; unread_count: number }>(
+        "/notifications/clear/",
+        { method: "DELETE" },
+      );
+      setUnreadCount(x.unread_count);
+    } catch {
+      setState((s) => ({ ...s, items: previous }));
+      setUnreadCount(previousUnread);
+    }
+  }
+  if (authStatus === "loading")
+    return (
+      <div className="content">
+        <NotificationsSkeleton />
+      </div>
+    );
+  if (!user)
+    return (
+      <div className="empty">
+        <BellIcon />
+        <h2>Sign in to view notifications</h2>
+        <button className="primary" onClick={openAuth}>
+          Sign in
+        </button>
+      </div>
+    );
+  return (
+    <div className="content">
+      <header className={`pageHeader ${styles.header}`}>
+        <div>
+          <h1 className={styles.notificationTitle}>Notifications</h1>
+          {unread > 0 && <small className={styles.notificationSubtitle}>{unread} unread</small>}
+        </div>
+        <div>
+          {unread > 0 && (
+            <button className="textButton" onClick={() => void readAll()}>
+              Mark all read
+            </button>
+          )}
+          <button
+            className="iconButton"
+            aria-label="Notification options"
+            onClick={() => setMenu(!menu)}
+          >
+            <MoreIcon />
+          </button>
+          {menu && (
+            <div className={styles.menu}>
+              <button onClick={() => void clear()}>
+                <TrashIcon />
+                Clear notifications
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+      {state.message && (
+        <p className="formError" role="alert">
+          {state.message}
+        </p>
+      )}
+      {state.status === "loading" ? (
+        <NotificationsSkeleton />
+      ) : state.status === "error" ? (
+        <div className="error">
+          <p>{state.message}</p>
+          <button className="secondary" onClick={() => setRetry((x) => x + 1)}>
+            Retry
+          </button>
+        </div>
+      ) : state.items.length ? (
+        <div className={styles.list}>
+          {state.items.map((n) => (
+            <NotificationRow
+              key={n.id}
+              item={n}
+              onOpen={() => void read(n)}
+              onDelete={() => void remove(n)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="empty">
+          <BellIcon />
+          <h2>You’re all caught up</h2>
+          <p>New activity will appear here.</p>
+        </div>
+      )}
+    </div>
+  );
+}
