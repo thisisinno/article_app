@@ -75,6 +75,19 @@ def paginated_rows(qs,request,limit=20):
     rows=list(qs[:limit+1]); more=len(rows)>limit; rows=rows[:limit]
     return rows, rows[-1].created_at.isoformat() if more and rows else None
 
+def paginated_newest(qs,request,limit=20):
+    """Stable descending cursor ordered by timestamp and UUID."""
+    cursor=request.GET.get("cursor")
+    if cursor:
+        try:
+            created_at,pk=cursor.rsplit("|",1)
+            qs=qs.filter(Q(created_at__lt=created_at)|Q(created_at=created_at,pk__lt=pk))
+        except (ValueError,ValidationError):
+            return [],None
+    rows=list(qs.order_by("-created_at","-id")[:limit+1]);more=len(rows)>limit;rows=rows[:limit]
+    next_cursor=f"{rows[-1].created_at.isoformat()}|{rows[-1].pk}" if more and rows else None
+    return rows,next_cursor
+
 def validate_image(upload):
     if not upload:return
     if upload.content_type not in IMAGE_TYPES: raise ValidationError("Use a JPEG, PNG, WebP, or GIF image.")
@@ -101,6 +114,7 @@ def login_view(request):
 @require_POST
 def logout_view(request):logout(request);return JsonResponse({"ok":True})
 
+@require_http_methods(["GET"])
 def feed(request):
     qs=Post.objects.filter(status="published",published_at__lte=timezone.now(),thread_root__isnull=True).select_related("author","author__profile","category")
     if request.GET.get("category"):qs=qs.filter(category__slug=request.GET["category"],category__is_active=True)
@@ -168,9 +182,23 @@ def view(request,post_id):return JsonResponse({"count":record_view(request,get_o
 def share(request,post_id):
     post=get_object_or_404(Post,pk=post_id,status="published");count=record_share(request,post,payload(request).get("channel","copy"));transaction.on_commit(lambda:notify_post_share(post,request.user if request.user.is_authenticated else None,getattr(request,"visitor",None)));return JsonResponse({"count":count})
 
-def comment_json(c,request):
-    actor=actor_kwargs(request);liked=CommentLike.objects.filter(comment=c,**actor).exists()
-    return {"id":str(c.pk),"body":c.body,"author":user_json(c.author) if c.author else {"id":"guest","username":None,"display_name":c.guest_name,"avatar":None,"verified":False,"is_staff":False,"is_superuser":False,"can_publish":False},"created_at":c.created_at.isoformat(),"counts":{"likes":c.like_count,"replies":c.reply_count},"viewer_state":{"liked":liked},"can_delete":bool(request.user.is_staff or (request.user.is_authenticated and c.author==request.user) or (not request.user.is_authenticated and c.visitor_id==request.visitor.id)),"replies":[comment_json(x,request) for x in c.replies.filter(status="published").select_related("author","author__profile")[:20]]}
+def comment_json(c,request,liked_ids=None,reply_previews=None):
+    liked=(c.pk in liked_ids) if liked_ids is not None else CommentLike.objects.filter(comment=c,**actor_kwargs(request)).exists()
+    previews=(reply_previews or {}).get(c.pk,[])
+    visitor_id=getattr(getattr(request,"visitor",None),"id",None)
+    return {"id":str(c.pk),"body":c.body,"author":user_json(c.author) if c.author else {"id":"guest","username":None,"display_name":c.guest_name,"avatar":None,"verified":False,"is_staff":False,"is_superuser":False,"can_publish":False},"created_at":c.created_at.isoformat(),"counts":{"likes":c.like_count,"replies":c.reply_count},"reply_count":c.reply_count,"has_more_replies":c.reply_count>len(previews),"viewer_state":{"liked":liked},"can_delete":bool(request.user.is_staff or (request.user.is_authenticated and c.author==request.user) or (not request.user.is_authenticated and c.visitor_id==visitor_id)),"replies":[comment_json(x,request,liked_ids,{}) for x in previews]}
+
+def serialized_comments(rows,request,include_previews=False):
+    ids=[c.pk for c in rows];liked=set(CommentLike.objects.filter(comment_id__in=ids,**actor_kwargs(request)).values_list("comment_id",flat=True))
+    previews={}
+    if include_previews:
+        # Fetch in one query, then retain at most two previews for each root.
+        for reply in Comment.objects.filter(parent_id__in=ids,status="published").select_related("author","author__profile").order_by("created_at","id"):
+            bucket=previews.setdefault(reply.parent_id,[])
+            if len(bucket)<2:bucket.append(reply)
+        preview_ids=[x.pk for values in previews.values() for x in values]
+        liked.update(CommentLike.objects.filter(comment_id__in=preview_ids,**actor_kwargs(request)).values_list("comment_id",flat=True))
+    return [comment_json(c,request,liked,previews) for c in rows]
 
 def validate_comment(request,d):
     body=d.get("body","").strip()
@@ -182,24 +210,33 @@ def validate_comment(request,d):
 def comments(request,post_id):
     post=get_object_or_404(Post.objects.select_related("author"),pk=post_id,status="published")
     if request.method=="GET":
-        rows,cursor=paginated_rows(post.comments.filter(status="published",parent__isnull=True).select_related("author","author__profile").prefetch_related("replies__author__profile"),request)
-        return JsonResponse({"results":[comment_json(c,request) for c in rows],"next_cursor":cursor})
+        roots=post.comments.filter(status="published",parent__isnull=True).select_related("author","author__profile")
+        total=roots.count();rows,cursor=paginated_newest(roots,request)
+        return JsonResponse({"results":serialized_comments(rows,request,True),"next_cursor":cursor,"total_count":total})
     d=payload(request);body,problem=validate_comment(request,d)
     if problem:return problem
-    c=Comment.objects.create(post=post,author=request.user if request.user.is_authenticated else None,visitor=None if request.user.is_authenticated else request.visitor,guest_name=d.get("guest_name","")[:80],body=body);Post.objects.filter(pk=post.pk).update(comment_count=F("comment_count")+1);transaction.on_commit(lambda:notify_post_comment(c));return JsonResponse(comment_json(c,request),status=201)
+    c=Comment.objects.create(post=post,author=request.user if request.user.is_authenticated else None,visitor=None if request.user.is_authenticated else request.visitor,guest_name=d.get("guest_name","")[:80],body=body);Post.objects.filter(pk=post.pk).update(comment_count=F("comment_count")+1);post.refresh_from_db(fields=("comment_count",));transaction.on_commit(lambda:notify_post_comment(c));return JsonResponse({"comment":comment_json(c,request),"post_comment_count":post.comment_count},status=201)
 
 @require_http_methods(["PATCH","DELETE"])
 def comment_detail(request,comment_id):
     c=get_object_or_404(Comment,pk=comment_id);own=(request.user.is_authenticated and c.author==request.user) or (not request.user.is_authenticated and c.visitor_id==request.visitor.id)
     if not own and not request.user.is_staff:return error("Forbidden",403,code="forbidden")
-    if request.method=="DELETE":c.status="removed";c.removed_at=timezone.now();c.save(update_fields=("status","removed_at"));return JsonResponse({},status=204)
+    if request.method=="DELETE":
+        if c.status=="published":
+            c.status="removed";c.removed_at=timezone.now();c.save(update_fields=("status","removed_at"));Post.objects.filter(pk=c.post_id).update(comment_count=F("comment_count")-1)
+            if c.parent_id:Comment.objects.filter(pk=c.parent_id).update(reply_count=F("reply_count")-1)
+        count=Post.objects.values_list("comment_count",flat=True).get(pk=c.post_id)
+        return JsonResponse({"deleted":True,"post_comment_count":count})
     c.body=payload(request).get("body",c.body)[:2000];c.save(update_fields=("body","updated_at"));return JsonResponse(comment_json(c,request))
 
-@require_POST
+@require_http_methods(["GET","POST"])
 def comment_reply(request,comment_id):
     parent=get_object_or_404(Comment.objects.select_related("post__author","author"),pk=comment_id,status="published");d=payload(request);body,problem=validate_comment(request,d)
+    if request.method=="GET":
+        qs=parent.replies.filter(status="published").select_related("author","author__profile");total=qs.count();rows,cursor=paginated_newest(qs,request)
+        return JsonResponse({"results":serialized_comments(rows,request),"next_cursor":cursor,"total_count":total})
     if problem:return problem
-    c=Comment.objects.create(post=parent.post,parent=parent,author=request.user if request.user.is_authenticated else None,visitor=None if request.user.is_authenticated else request.visitor,guest_name=d.get("guest_name","")[:80],body=body);Comment.objects.filter(pk=parent.pk).update(reply_count=F("reply_count")+1);Post.objects.filter(pk=parent.post_id).update(comment_count=F("comment_count")+1);transaction.on_commit(lambda:notify_comment_reply(c));return JsonResponse(comment_json(c,request),status=201)
+    c=Comment.objects.create(post=parent.post,parent=parent,author=request.user if request.user.is_authenticated else None,visitor=None if request.user.is_authenticated else request.visitor,guest_name=d.get("guest_name","")[:80],body=body);Comment.objects.filter(pk=parent.pk).update(reply_count=F("reply_count")+1);Post.objects.filter(pk=parent.post_id).update(comment_count=F("comment_count")+1);parent.refresh_from_db(fields=("reply_count",));parent.post.refresh_from_db(fields=("comment_count",));transaction.on_commit(lambda:notify_comment_reply(c));return JsonResponse({"comment":comment_json(c,request),"parent_reply_count":parent.reply_count,"post_comment_count":parent.post.comment_count},status=201)
 
 @require_http_methods(["POST","DELETE"])
 def comment_like(request,comment_id):

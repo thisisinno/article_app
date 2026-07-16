@@ -37,7 +37,8 @@ async function decode<T>(response: Response): Promise<T> {
   const requestId = response.headers.get("X-Request-ID");
   if (response.status === 204) return undefined as T;
   const contentType = response.headers.get("Content-Type")?.toLowerCase() ?? "";
-  if (!contentType.includes("application/json")) {
+  const mediaType = contentType.split(";", 1)[0].trim();
+  if (mediaType !== "application/json" && mediaType !== "application/problem+json") {
     throw new ApiError(INVALID_MESSAGE, response.status, "invalid_response", response.status >= 500, requestId);
   }
   let value: unknown;
@@ -48,8 +49,17 @@ async function decode<T>(response: Response): Promise<T> {
   }
   if (!response.ok) {
     const details = errorDetails(value);
+    const code = details.code || "request_failed";
+    const messages: Record<string, string> = {
+      backend_unreachable: NETWORK_MESSAGE,
+      backend_gateway_error: "The application server is temporarily unavailable. Please retry.",
+      server_error: "The application server could not complete the request. Please retry.",
+      database_schema_error: "The server database needs to be updated.",
+      authentication_required: "Please sign in to continue.",
+      invalid_credentials: "The username or password is incorrect.",
+    };
     const fallback = response.status === 401 ? "Please sign in to continue." : response.status >= 500 ? "The server is temporarily unavailable. Please retry." : "The request could not be completed.";
-    throw new ApiError(details.message || fallback, response.status, details.code || "request_failed", response.status >= 500 || response.status === 429, details.requestId || requestId);
+    throw new ApiError(messages[code] || details.message || fallback, response.status, code, response.status >= 500 || response.status === 429, details.requestId || requestId);
   }
   return value as T;
 }
@@ -113,4 +123,35 @@ export async function api<T>(path: string, init: ApiInit = {}, csrfRetried = fal
 
 export function resetAuthCsrf() {
   clearCsrfToken();
+}
+
+type RecordValue = Record<string, unknown>;
+const record = (value: unknown): value is RecordValue => !!value && typeof value === "object" && !Array.isArray(value);
+
+export function isUser(value: unknown): value is import("./types").User {
+  if (!record(value)) return false;
+  return typeof value.id === "string" && (typeof value.username === "string" || value.username === null) &&
+    typeof value.display_name === "string" && typeof value.is_staff === "boolean" &&
+    typeof value.is_superuser === "boolean" && typeof value.can_publish === "boolean";
+}
+
+export function validateAuthResponse(value: unknown, requireUser = false) {
+  if (!record(value) || !("user" in value) || (value.user !== null && !isUser(value.user)) || (requireUser && value.user === null)) {
+    throw new ApiError("The authentication server returned an invalid response.", 502, "invalid_auth_response", true);
+  }
+  return value as {user: import("./types").User | null};
+}
+
+export function validateFeedResponse(value: unknown) {
+  if (!record(value) || !Array.isArray(value.results) || !(value.next_cursor == null || typeof value.next_cursor === "string")) {
+    throw new ApiError("The feed server returned an invalid response.", 502, "invalid_feed_response", true);
+  }
+  return value as {results: import("./types").Post[]; next_cursor?: string | null};
+}
+
+export function validateCommentsResponse(value: unknown) {
+  if (!record(value) || !Array.isArray(value.results) || !(value.next_cursor == null || typeof value.next_cursor === "string")) {
+    throw new ApiError("The comments server returned an invalid response.", 502, "invalid_comments_response", true);
+  }
+  return value as {results: import("./types").Comment[]; next_cursor?: string | null; total_count?: number};
 }

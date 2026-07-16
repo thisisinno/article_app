@@ -4,9 +4,18 @@ import {DJANGO_ORIGIN} from "@/lib/server/backend";
 export const dynamic = "force-dynamic";
 const HOP_BY_HOP = ["host", "connection", "content-length", "transfer-encoding", "content-encoding", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "upgrade"];
 
-function jsonError(status: number, code: string, message: string) {
-  return Response.json({error: {code, message}}, {status, headers: {"Cache-Control": "no-store"}});
+function jsonError(status: number, code: string, message: string, requestId?: string | null) {
+  return Response.json({error: {code, message, ...(requestId ? {request_id: requestId} : {})}}, {status, headers: {"Cache-Control": "no-store", ...(requestId ? {"X-Request-ID": requestId} : {})}});
 }
+
+const isJson = (value: string | null) => {
+  const type = (value ?? "").toLowerCase().split(";", 1)[0].trim();
+  return type === "application/json" || type === "application/problem+json";
+};
+
+const safePreview = (value: string) => value.slice(0, 200)
+  .replace(/(password|cookie|csrf|authorization)(["'\s:=]+)[^\s,;}&<]+/gi, "$1$2[REDACTED]")
+  .replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
 async function proxy(request: NextRequest) {
   const target = new URL(`${request.nextUrl.pathname}${request.nextUrl.search}`, DJANGO_ORIGIN);
@@ -16,6 +25,7 @@ async function proxy(request: NextRequest) {
   headers.set("Referer", `${DJANGO_ORIGIN}/`);
   headers.set("X-Forwarded-Host", new URL(DJANGO_ORIGIN).host);
   headers.set("X-Forwarded-Proto", "https");
+  if (!headers.has("Accept")) headers.set("Accept", "application/json");
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15_000);
@@ -29,8 +39,10 @@ async function proxy(request: NextRequest) {
       redirect: "manual",
       signal: controller.signal,
     });
+    const requestId = upstream.headers.get("X-Request-ID") || request.headers.get("X-Request-ID");
     if ([301, 302, 303, 307, 308].includes(upstream.status)) {
-      return jsonError(502, "unexpected_backend_redirect", "The application server returned an unexpected redirect. Please retry.");
+      console.error("Unexpected API redirect", {path: target.pathname, status: upstream.status, requestId, location: upstream.headers.get("Location")?.slice(0, 200)});
+      return jsonError(502, "unexpected_backend_redirect", "The application server returned an unexpected redirect.", requestId);
     }
     const responseHeaders = new Headers();
     for (const name of ["content-type", "cache-control", "x-request-id", "etag", "last-modified", "content-disposition"]) {
@@ -41,12 +53,23 @@ async function proxy(request: NextRequest) {
     const cookies = cookieHeaders.getSetCookie?.() ?? (upstream.headers.get("set-cookie") ? [upstream.headers.get("set-cookie")!] : []);
     cookies.forEach(cookie => responseHeaders.append("Set-Cookie", cookie));
     responseHeaders.set("Cache-Control", "no-store");
-    return new Response(request.method === "HEAD" ? null : upstream.body, {status: upstream.status, headers: responseHeaders});
+    if (request.method === "HEAD" || upstream.status === 204 || upstream.status === 304) {
+      return new Response(null, {status: upstream.status, headers: responseHeaders});
+    }
+    const contentType = upstream.headers.get("Content-Type");
+    if (!isJson(contentType)) {
+      const preview = safePreview(await upstream.text());
+      console.error("Non-JSON API upstream", {path: `${target.pathname}${target.search}`, status: upstream.status, contentType, requestId, preview});
+      if ([502, 503, 504].includes(upstream.status)) return jsonError(upstream.status, "backend_gateway_error", "The application server is temporarily unavailable.", requestId);
+      if (upstream.status === 200) return jsonError(502, "upstream_non_json", "The application server returned an invalid response.", requestId);
+      return jsonError(upstream.status >= 400 ? upstream.status : 502, "upstream_non_json", "The application server failed while processing this request.", requestId);
+    }
+    return new Response(upstream.body, {status: upstream.status, headers: responseHeaders});
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      return jsonError(504, "backend_timeout", "The application server took too long to respond. Please retry.");
+      return jsonError(504, "backend_timeout", "The application server took too long to respond. Please retry.", request.headers.get("X-Request-ID"));
     }
-    return jsonError(502, "backend_unreachable", "The application server could not be reached. Please retry.");
+    return jsonError(502, "backend_unreachable", "The application server could not be reached. Please retry.", request.headers.get("X-Request-ID"));
   } finally {
     clearTimeout(timeout);
   }
